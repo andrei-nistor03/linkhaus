@@ -97,6 +97,7 @@ export default function Hero() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const fadeRef = useRef<HTMLDivElement>(null);
+  const bgDissolveRef = useRef<HTMLDivElement>(null);
 
   const titleDissolveRef = useRef<HTMLDivElement>(null);
   // Every character of every scattered word gets its own DOM node here, in
@@ -277,14 +278,18 @@ export default function Hero() {
         },
       });
 
+      // Scroll-out: the title stays exactly where it is on screen (no
+      // position or scale change) and simply blurs out as it fades — kept
+      // deliberately separate from the entrance/idle animations above. The
+      // halftone canvas gets the identical treatment, in lockstep with the
+      // title, before the paper overlay covers everything. The 3D scene is
+      // deliberately excluded — it stays sharp all the way through.
       tl.to(
-        titleDissolveRef.current,
+        [titleDissolveRef.current, bgDissolveRef.current],
         reducedMotion
           ? { opacity: 0, ease: "none", duration: 0.4 }
           : {
               opacity: 0,
-              yPercent: -14,
-              scale: 1.05,
               filter: "blur(6px)",
               ease: "none",
               duration: 0.4,
@@ -355,7 +360,9 @@ export default function Hero() {
         ref={pinRef}
         className="sticky top-0 h-screen w-full overflow-hidden bg-paper"
       >
-        <HalftoneBackground />
+        <div ref={bgDissolveRef} className="absolute inset-0">
+          <HalftoneBackground />
+        </div>
 
         <div className="absolute -inset-x-[16%] -top-[1%] -bottom-[26%] md:inset-0">
           <SceneErrorBoundary fallback={<div className="absolute inset-0" />}>
