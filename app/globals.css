@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-grotesk: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #f5f3ee;
+  scroll-behavior: auto;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+body {
+  background: #f5f3ee;
+  color: #0d0d0d;
+  font-family: var(--font-grotesk);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Custom cursor: hide the native pointer only once JS confirms a fine
+   pointer is present (desktop). Applied via a class on <html> so touch
+   devices always keep their native cursor. */
+html.has-custom-cursor,
+html.has-custom-cursor a,
+html.has-custom-cursor button {
+  cursor: none;
+}
+
+::selection {
+  background: #0d0d0d;
+  color: #f5f3ee;
+}
+
+/* Film grain overlay, fixed to viewport, sits above content, ignores
+   pointer events. Cheap SVG turbulence, no images fetched. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.mask-line {
+  overflow: hidden;
+  display: block;
+}
+
+.font-mono-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Utility for horizontal editorial rules */
+.hr-line {
+  border-top: 1px solid #dedad0;
+}
+
+/* Idle "floating in space" bob for hero copy. Deliberately out of phase and
+   different durations between the two lines so they don't move in lockstep.
+   Neutralized automatically by the prefers-reduced-motion rule below since
+   it zeroes animation-duration globally. */
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes hero-float-alt {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+.hero-float-slow {
+  animation: hero-float 7s ease-in-out infinite;
+  will-change: transform;
+}
+.hero-float-slow-alt {
+  animation: hero-float-alt 9s ease-in-out infinite;
+  animation-delay: 0.6s;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
