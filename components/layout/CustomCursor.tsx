@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/gsap";
 import { useIsTouch } from "@/lib/useMediaQuery";
+import { subscribeCursorOverride } from "@/lib/cursorState";
 
 type Variant = "default" | "link" | "project" | "3d";
 
@@ -29,7 +30,14 @@ export default function CustomCursor() {
   const isTouch = useIsTouch();
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
-  const [variant, setVariant] = useState<Variant>("default");
+  const [domVariant, setDomVariant] = useState<Variant>("default");
+  // Wins over `domVariant` whenever a 3D scene (no real DOM hover target to
+  // attach `data-cursor` to) pushes one via lib/cursorState.ts — see
+  // ProjectPanel.tsx.
+  const [override, setOverride] = useState<Variant | null>(null);
+  const variant = override ?? domVariant;
+
+  useEffect(() => subscribeCursorOverride(setOverride), []);
 
   useEffect(() => {
     if (isTouch) return;
@@ -66,11 +74,11 @@ export default function CustomCursor() {
     const onOver = (e: MouseEvent) => {
       const target = (e.target as HTMLElement)?.closest?.("[data-cursor]");
       const v = target?.getAttribute("data-cursor") as Variant | null;
-      setVariant(v ?? "default");
+      setDomVariant(v ?? "default");
     };
     const onOut = (e: MouseEvent) => {
       const related = (e.relatedTarget as HTMLElement)?.closest?.("[data-cursor]");
-      if (!related) setVariant("default");
+      if (!related) setDomVariant("default");
     };
     const onDown = () => gsap.to(dot, { scale: 0.6, duration: 0.15 });
     const onUp = () => gsap.to(dot, { scale: 1, duration: 0.25 });

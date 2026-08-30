@@ -3,6 +3,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CustomEase } from "gsap/CustomEase";
+import { SplitText } from "gsap/SplitText";
 
 let registered = false;
 
@@ -11,9 +12,9 @@ let registered = false;
  *  (0.16, 1, 0.3, 1) used for CSS transitions in tailwind.config.ts. */
 export function registerGsap() {
   if (registered || typeof window === "undefined") return;
-  gsap.registerPlugin(ScrollTrigger, CustomEase);
+  gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText);
   CustomEase.create("art", "0.16, 1, 0.3, 1");
   registered = true;
 }
 
-export { gsap, ScrollTrigger };
+export { gsap, ScrollTrigger, SplitText };
