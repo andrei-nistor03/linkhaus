@@ -7,7 +7,7 @@ import ServicesBackdrop from "@/components/services/ServicesBackdrop";
 import ServiceCluster from "@/components/services/ServiceCluster";
 import { SERVICE_CLUSTERS } from "@/components/services/servicesData";
 
-const BIG_TITLE_TEXT = "Services";
+const LABEL_TEXT = "Our Services";
 const TITLE = "Websites that turn you into the obvious choice.";
 const SUBTITLE =
   "Every project is designed to outperform the competition. From first impression to checkout, design to infrastructure.";
@@ -15,11 +15,26 @@ const SUBTITLE =
 const ACCENTS = SERVICE_CLUSTERS.map((c) => c.accent);
 const TOTAL = SERVICE_CLUSTERS.length;
 
-const BIG_TITLE_SCALE_START = 3.2;
+// The "Our Services" label's own corner-stick choreography — see the
+// effect below. It opens at LABEL_SCALE_START its resting size while
+// sitting centered in the flow, then — once scrolled to where it's
+// centered in the viewport — shrinks back down to its true (1x) size
+// while sliding into the top-left corner, where it's pinned for the rest
+// of the section. LABEL_SETTLE_FRACTION mirrors Projects.tsx's
+// TITLE_SETTLE_FRACTION: the shrink/slide completes within just the first
+// slice of the pin's own (much longer) scrubbed duration, then holds.
+const LABEL_SCALE_START = 4;
+const LABEL_SETTLE_FRACTION = 0.12;
+// Corner inset the label settles into, matching the left-5/top-5 (mobile)
+// and sm:left-8/top-8 (desktop) corner spacing the earlier watermark used.
+const CORNER_INSET = 20;
+const CORNER_INSET_SM = 32;
+const CORNER_INSET_BREAKPOINT = 640; // px — Tailwind's `sm`
 
 export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
-  const bigTitleRef = useRef<HTMLHeadingElement>(null);
+  const labelWrapRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLHeadingElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
@@ -29,7 +44,11 @@ export default function Services() {
 
   const handleActive = useCallback((i: number) => setActiveIndex(i), []);
 
-  const bigTitleChars = useMemo(() => BIG_TITLE_TEXT.split(""), []);
+  // One span per character (space included, so the wave animation's
+  // staggered delay flows continuously across both words) — same idle
+  // ripple Projects.tsx's "Selected Work" label uses (see label-wave-letter
+  // in globals.css).
+  const labelChars = useMemo(() => LABEL_TEXT.split(""), []);
 
   useEffect(() => {
     registerGsap();
@@ -112,113 +131,108 @@ export default function Services() {
     };
   }, [reducedMotion]);
 
-  // The fixed "SERVICES" corner watermark. This is where the previous
-  // attempt fell short of Projects.tsx's "Selected Work" label: that label
-  // isn't a heading that settles into its place in the document and stays
-  // there — it's `position: absolute` inside a permanently-pinned,
-  // viewport-sized ancestor, so it *never* participates in document flow
-  // and stays glued to the same screen spot for the label's whole
-  // lifetime. Reproducing that for a title that isn't inside any pinned
-  // ancestor means going further: this title is `position: fixed` always
-  // (see its JSX below — no ancestor here has a transform/filter to hijack
-  // that fixed positioning), invisible outside the section, and inside it:
-  // opens dead-center and oversized, scales/slides down into its small
-  // fixed corner spot over the first stretch of the section's time
-  // onscreen, then genuinely stays put — a real fixed position, not a
-  // scroll-tracking illusion — while the rest of the section's content
-  // scrolls past underneath it, for as long as any part of the section is
-  // still onscreen.
+  // "Our Services" label: opens big and centered (in normal document
+  // flow, above the headline), then — once scrolled to where it's
+  // centered in the viewport — shrinks and slides into the top-left
+  // corner, where it stays pinned for the rest of the section. Same
+  // pin+scrub+settle-fraction structure as Projects.tsx's "Selected Work"
+  // label (see LABEL_SETTLE_FRACTION above), just anchored to the label's
+  // own scroll position instead of a dedicated pinned viewport.
   useEffect(() => {
     registerGsap();
     const section = sectionRef.current;
-    const title = bigTitleRef.current;
-    if (!section || !title) return;
+    const wrap = labelWrapRef.current;
+    const label = labelRef.current;
+    if (!section || !wrap || !label) return;
+
+    if (reducedMotion) {
+      // Plain style assignment, not gsap.set — the settle ticker below
+      // (the non-reduced-motion path) also writes `label.style.transform`
+      // directly rather than through GSAP's own transform cache, and
+      // mixing the two on the same element is what causes one to silently
+      // clobber the other.
+      label.style.transform = `scale(${LABEL_SCALE_START})`;
+      return;
+    }
 
     let cancelled = false;
     let ctx: gsap.Context | undefined;
     let tick: (() => void) | undefined;
-    const centerOffset = { x: 0, y: 0 };
+    // Offset (from viewport center) the label needs to end at once
+    // settled into its corner — NOT the offset it starts at: at progress
+    // 0 the label is already sitting at the viewport's center (that's
+    // exactly what the ScrollTrigger's "center center" start below
+    // guarantees), so the animation instead interpolates FROM 0 TO this.
+    const cornerOffset = { x: 0, y: 0 };
 
-    // Measuring the title's own width/position has to wait on the Thunder
-    // variable font actually being swapped in — measuring against the
-    // fallback font's (narrower) metrics would bake a wrong, one-off
-    // centerOffset in permanently, with nothing afterward to prompt a
-    // re-measure (the font finishing loading doesn't fire a resize event).
-    function measureCenterOffset() {
-      const prevTransform = title!.style.transform;
-      title!.style.transform = "none";
-      // NOT title.getBoundingClientRect(): the <h2> is a block element as
-      // wide as its container, not the tight width of the word itself —
-      // union the per-letter <span>s instead to get the actual glyphs'
-      // bounding box.
-      const letterRects = Array.from(title!.querySelectorAll("span")).map((el) =>
-        el.getBoundingClientRect(),
-      );
-      const left = Math.min(...letterRects.map((r) => r.left));
-      const right = Math.max(...letterRects.map((r) => r.right));
-      const top = Math.min(...letterRects.map((r) => r.top));
-      const bottom = Math.max(...letterRects.map((r) => r.bottom));
+    // wrap never moves or scales — it's the honest, untouched layout
+    // reference both for "is the label centered in the viewport yet?"
+    // (the trigger below) and for the label's own natural (unscaled)
+    // size, measured off `label` itself with its transform stripped so a
+    // mid-animation scale never throws the reading off.
+    function measureCornerOffset() {
+      const prevTransform = label!.style.transform;
+      label!.style.transform = "none";
+      const rect = label!.getBoundingClientRect();
+      label!.style.transform = prevTransform;
 
-      // The scale in the tick below defaults to pivoting around the <h2>'s
-      // own (wide) box center, not the tight text's — pin transform-origin
-      // to the text's actual center (in the h2's local box coordinates) so
-      // scaling grows/shrinks around the glyphs themselves, matching what
-      // the translate math below assumes.
-      const h2Rect = title!.getBoundingClientRect();
-      title!.style.transformOrigin = `${left - h2Rect.left + (right - left) / 2}px ${
-        top - h2Rect.top + (bottom - top) / 2
-      }px`;
-      title!.style.transform = prevTransform;
+      const inset = window.innerWidth >= CORNER_INSET_BREAKPOINT ? CORNER_INSET_SM : CORNER_INSET;
+      const targetCenterX = inset + rect.width / 2;
+      const targetCenterY = inset + rect.height / 2;
 
-      // Since the title is always position:fixed, "its own resting spot"
-      // (the small corner) is a fixed point in viewport space — no need to
-      // account for scroll position at all here, unlike a title that
-      // settles into normal document flow.
-      centerOffset.x = window.innerWidth / 2 - (left + right) / 2;
-      centerOffset.y = window.innerHeight / 2 - (top + bottom) / 2;
+      cornerOffset.x = targetCenterX - window.innerWidth / 2;
+      cornerOffset.y = targetCenterY - window.innerHeight / 2;
+    }
+
+    // Locks wrap's own box to label's natural (rest, unscaled) height so
+    // that pinning `label` below — which lifts it out of flow via
+    // `position: fixed` — never collapses the space it used to occupy and
+    // jolts the headline beneath it. Re-run alongside measureCornerOffset
+    // any time the label's rendered size could have changed.
+    function lockWrapHeight() {
+      wrap!.style.height = "auto";
+      const prevTransform = label!.style.transform;
+      label!.style.transform = "none";
+      const height = label!.getBoundingClientRect().height;
+      label!.style.transform = prevTransform;
+      wrap!.style.height = `${height}px`;
+    }
+
+    function remeasure() {
+      lockWrapHeight();
+      measureCornerOffset();
     }
 
     const setup = () => {
       if (cancelled) return;
 
       ctx = gsap.context(() => {
-        // Visible only while the section is actually anywhere onscreen —
-        // a fixed element doesn't naturally scroll out of view with the
-        // rest of the page the way normal content does, so that has to be
-        // managed explicitly here.
-        ScrollTrigger.create({
-          trigger: section,
-          start: "top bottom",
-          end: "bottom top",
-          onToggle: (self) => {
-            gsap.to(title, { opacity: self.isActive ? 1 : 0, duration: 0.5, overwrite: true });
-          },
-        });
-
-        if (reducedMotion) {
-          gsap.set(title, { transform: "none" });
-          return;
-        }
-
-        measureCenterOffset();
-        window.addEventListener("resize", measureCenterOffset);
+        remeasure();
+        window.addEventListener("resize", remeasure);
 
         let progress = 0;
         ScrollTrigger.create({
-          trigger: section,
-          start: "top bottom",
-          end: "top 55%",
+          trigger: wrap,
+          start: "center center",
+          endTrigger: section,
+          end: "bottom top",
+          pin: label,
+          pinSpacing: false,
+          scrub: true,
+          onEnter: measureCornerOffset,
+          onEnterBack: measureCornerOffset,
           onUpdate: (self) => {
             progress = self.progress;
           },
         });
 
         tick = () => {
-          const settle = progress * progress * (3 - 2 * progress); // smoothstep
-          const scale = gsap.utils.interpolate(BIG_TITLE_SCALE_START, 1, settle);
-          const tx = gsap.utils.interpolate(centerOffset.x, 0, settle);
-          const ty = gsap.utils.interpolate(centerOffset.y, 0, settle);
-          title!.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+          const settle = gsap.utils.clamp(0, 1, progress / LABEL_SETTLE_FRACTION);
+          const eased = settle * settle * (3 - 2 * settle); // smoothstep
+          const scale = gsap.utils.interpolate(LABEL_SCALE_START, 1, eased);
+          const tx = gsap.utils.interpolate(0, cornerOffset.x, eased);
+          const ty = gsap.utils.interpolate(0, cornerOffset.y, eased);
+          label!.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
         };
         gsap.ticker.add(tick);
       }, sectionRef);
@@ -233,7 +247,7 @@ export default function Services() {
     return () => {
       cancelled = true;
       if (tick) gsap.ticker.remove(tick);
-      window.removeEventListener("resize", measureCenterOffset);
+      window.removeEventListener("resize", remeasure);
       ctx?.revert();
     };
   }, [reducedMotion]);
@@ -289,26 +303,9 @@ export default function Services() {
     <section
       id="services"
       ref={sectionRef}
-      className="relative overflow-hidden bg-ink py-[16vh] sm:py-[20vh]"
+      className="relative overflow-hidden bg-ink pb-[16vh] pt-[26vh] sm:pb-[20vh] sm:pt-[32vh]"
     >
       <ServicesBackdrop activeIndex={activeIndex} accents={ACCENTS} />
-
-      {/* Fixed corner watermark, not part of document flow — see the
-          effect above for why. Rendered as a direct child of the section
-          (like railRef below) rather than nested inside the centered
-          content column purely for legibility; position:fixed doesn't
-          care either way. */}
-      <h2
-        ref={bigTitleRef}
-        className="pointer-events-none fixed left-5 top-5 z-20 font-display text-[clamp(1.75rem,3.6vw,3.25rem)] font-black uppercase leading-[0.85] tracking-wide text-paper [font-variation-settings:'wght'_900,'CNTR'_0] sm:left-8 sm:top-8"
-        style={{ opacity: 0, willChange: "transform, opacity" }}
-      >
-        {bigTitleChars.map((char, i) => (
-          <span key={i} className="label-wave-letter" style={{ animationDelay: `${i * 0.07}s` }}>
-            {char}
-          </span>
-        ))}
-      </h2>
 
       <div
         ref={railRef}
@@ -330,7 +327,36 @@ export default function Services() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="mb-24 sm:mb-32 lg:mb-40">
+        <div className="mb-14 sm:mb-20 lg:mb-24">
+          {/* wrap reserves the flow space (locked to label's natural
+              height by the effect above) so that label being lifted into
+              `position: fixed` mid-scroll never collapses this gap and
+              jolts the headline below. wrap itself never moves/scales —
+              it's the honest reference the pin's "center center" start
+              measures against. */}
+          <div ref={labelWrapRef} className="relative mb-5 sm:mb-6">
+            <h2
+              ref={labelRef}
+              className="pointer-events-none z-20 mx-auto w-fit text-center font-display text-[clamp(1.5rem,3vw,2.25rem)] font-black uppercase leading-[0.85] tracking-wide text-paper [font-variation-settings:'wght'_900,'CNTR'_0]"
+              style={{ willChange: "transform" }}
+            >
+              {labelChars.map((char, i) =>
+                char === " " ? (
+                  <span key={i} className="inline-block">
+                    &nbsp;
+                  </span>
+                ) : (
+                  <span
+                    key={i}
+                    className={reducedMotion ? "inline-block" : "label-wave-letter"}
+                    style={reducedMotion ? undefined : { animationDelay: `${i * 0.07}s` }}
+                  >
+                    {char}
+                  </span>
+                ),
+              )}
+            </h2>
+          </div>
           <h3
             ref={titleRef}
             className="services-lava-text mx-auto max-w-4xl text-balance text-center font-display text-[clamp(2.5rem,6.2vw,6rem)] font-black uppercase leading-[0.95] [font-variation-settings:'wght'_800,'CNTR'_0]"

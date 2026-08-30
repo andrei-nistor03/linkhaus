@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { gsap, registerGsap } from "@/lib/gsap";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 
@@ -32,6 +32,7 @@ const GRID_TILE = 64; // px — must match backgroundSize below exactly
 export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackdropProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const gridLightRef = useRef<HTMLDivElement>(null);
   const glowWrapperRef = useRef<HTMLDivElement>(null);
   const glowLayerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isTouch = useIsTouch();
@@ -57,6 +58,30 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
           ease: "none",
           repeat: -1,
         });
+      }
+
+      // Idle "lighting" pass over the grid: a brighter copy of the same
+      // grid lines, nested inside gridRef (so it drifts in lockstep and
+      // its tiles never fall out of registration with the base layer),
+      // revealed only through a soft ellipse mask whose center roams
+      // briskly across nearly the full grid via CSS custom properties.
+      // Only the mask's window moves — the bright layer's own
+      // background-image never gets an independent transform — so no
+      // matter where the spotlight roams, the lines it lights up are
+      // pixel-aligned with the dim grid underneath. Two independent,
+      // differently-timed yoyo tweens (rather than one circular path) keep
+      // the wander from reading as a mechanical loop.
+      if (!reducedMotion && gridLightRef.current) {
+        gsap.fromTo(
+          gridLightRef.current,
+          { "--gx": "14%" },
+          { "--gx": "86%", duration: 10, ease: "sine.inOut", yoyo: true, repeat: -1 },
+        );
+        gsap.fromTo(
+          gridLightRef.current,
+          { "--gy": "18%" },
+          { "--gy": "82%", duration: 7, ease: "sine.inOut", yoyo: true, repeat: -1 },
+        );
       }
 
       const setGlowX = gsap.quickTo(glowWrapper, "x", { duration: 0.9, ease: "power3.out" });
@@ -131,7 +156,31 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
               "linear-gradient(rgba(245,243,238,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(245,243,238,0.06) 1px, transparent 1px)",
             backgroundSize: `${GRID_TILE}px ${GRID_TILE}px`,
           }}
-        />
+        >
+          {/* Brighter twin of the grid above, nested here so it shares this
+              element's drift transform exactly — see the tween comment for
+              why only its mask (not this background) ever moves on its
+              own. */}
+          {!reducedMotion && (
+            <div
+              ref={gridLightRef}
+              className="absolute inset-0"
+              style={
+                {
+                  "--gx": "50%",
+                  "--gy": "50%",
+                  backgroundImage:
+                    "linear-gradient(rgba(245,243,238,0.22) 1px, transparent 1px), linear-gradient(90deg, rgba(245,243,238,0.22) 1px, transparent 1px)",
+                  backgroundSize: `${GRID_TILE}px ${GRID_TILE}px`,
+                  maskImage:
+                    "radial-gradient(ellipse 26% 22% at var(--gx) var(--gy), black, transparent 70%)",
+                  WebkitMaskImage:
+                    "radial-gradient(ellipse 26% 22% at var(--gx) var(--gy), black, transparent 70%)",
+                } as CSSProperties
+              }
+            />
+          )}
+        </div>
       </div>
 
       {/* Cursor-reactive (or, on touch, self-drifting) glow, tinted to the
