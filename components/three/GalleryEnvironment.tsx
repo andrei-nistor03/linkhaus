@@ -7,6 +7,7 @@ import * as THREE from "three";
 import { PANEL_COUNT, TOTAL_SPAN, panelLayout } from "@/lib/galleryLayout";
 import { galleryState } from "@/lib/galleryState";
 import { scrollState } from "@/lib/scrollState";
+import { GRID_LINE_COLOR, GRID_MAJOR_COLOR } from "@/lib/gridTheme";
 
 const DUST_COUNT = 160;
 const MOTE_COUNT = 70;
@@ -493,10 +494,10 @@ export default function GalleryEnvironment({
         args={[TOTAL_SPAN + 20, 12]}
         cellSize={0.55}
         cellThickness={0.5}
-        cellColor="#dedad0"
+        cellColor={GRID_LINE_COLOR}
         sectionSize={2.2}
         sectionThickness={0.9}
-        sectionColor="#c9c4b6"
+        sectionColor={GRID_MAJOR_COLOR}
         fadeDistance={16}
         fadeStrength={1.4}
         followCamera={false}
@@ -507,7 +508,7 @@ export default function GalleryEnvironment({
         <Line
           key={i}
           points={pts}
-          color="#dedad0"
+          color={GRID_LINE_COLOR}
           transparent
           opacity={0.55}
           lineWidth={1}

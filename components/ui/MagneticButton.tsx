@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import { gsap } from "@/lib/gsap";
 import { useIsTouch } from "@/lib/useMediaQuery";
 import clsx from "clsx";
@@ -19,6 +19,9 @@ interface MagneticButtonProps {
    */
   layered?: boolean;
   cursor?: "link" | "project" | "3d";
+  target?: string;
+  rel?: string;
+  onClick?: (e: ReactMouseEvent<HTMLAnchorElement>) => void;
 }
 
 /**
@@ -40,6 +43,9 @@ export default function MagneticButton({
   radius = 80,
   layered = true,
   cursor = "link",
+  target,
+  rel,
+  onClick,
 }: MagneticButtonProps) {
   const shellRef = useRef<HTMLAnchorElement>(null);
   const innerRef = useRef<HTMLSpanElement>(null);
@@ -106,6 +112,9 @@ export default function MagneticButton({
     <a
       ref={shellRef}
       href={href}
+      target={target}
+      rel={rel}
+      onClick={onClick}
       data-cursor={cursor}
       className={clsx("will-change-transform", className)}
     >

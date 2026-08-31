@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
 import { gsap, ScrollTrigger, registerGsap } from "./gsap";
+import { lenisState } from "./lenisState";
 
 /**
  * Boots Lenis smooth-scroll and wires its scroll events into GSAP's ticker
@@ -24,6 +25,7 @@ export function useLenis() {
     });
 
     lenis.on("scroll", ScrollTrigger.update);
+    lenisState.instance = lenis;
 
     const tick = (time: number) => {
       lenis.raf(time * 1000);
@@ -34,6 +36,7 @@ export function useLenis() {
     return () => {
       gsap.ticker.remove(tick);
       lenis.destroy();
+      lenisState.instance = null;
     };
   }, []);
 }

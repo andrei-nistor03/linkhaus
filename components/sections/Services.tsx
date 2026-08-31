@@ -303,7 +303,14 @@ export default function Services() {
     <section
       id="services"
       ref={sectionRef}
-      className="relative overflow-hidden bg-ink pb-[16vh] pt-[26vh] sm:pb-[20vh] sm:pt-[32vh]"
+      // Bottom padding is deliberately generous — this is scroll runway,
+      // not visual spacing: TransitionVeil's blackout (see its own
+      // TRIGGER_START) is keyed off Contact's top edge, which sits right at
+      // this section's bottom edge, so a tight pb- here would let the
+      // blackout start closing in while the last ServiceCluster is still
+      // the thing on screen. The extra padding buys scroll distance for
+      // that last cluster to fully clear the viewport first.
+      className="relative overflow-hidden bg-ink pb-[36vh] pt-[26vh] sm:pb-[42vh] sm:pt-[32vh]"
     >
       <ServicesBackdrop activeIndex={activeIndex} accents={ACCENTS} />
 

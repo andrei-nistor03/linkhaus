@@ -1,16 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { INTRO_COMPLETE_EVENT } from "./Preloader";
 import MagneticButton from "@/components/ui/MagneticButton";
+import { requestSectionTransition } from "@/lib/navTransitionState";
 
 const LINKS = [
   { label: "Work", href: "#work" },
-  { label: "Studio", href: "#studio" },
   { label: "Services", href: "#services" },
   { label: "Contact", href: "#contact" },
 ];
+
+/** Every internal anchor in Nav (logo, links, mobile menu, the CTA) routes
+ *  through this instead of a plain hash jump / Lenis smooth scroll — see
+ *  lib/navTransitionState.ts and SectionTransitionOverlay.tsx for the
+ *  loader-then-teleport transition it triggers. */
+function handleSectionLink(e: MouseEvent<HTMLAnchorElement>, href: string) {
+  e.preventDefault();
+  requestSectionTransition(href);
+}
 
 const PILL_THRESHOLD = 48;
 
@@ -99,6 +108,7 @@ export default function Nav() {
       >
         <a
           href="#top"
+          onClick={(e) => handleSectionLink(e, "#top")}
           data-cursor="link"
           className="font-mono-label whitespace-nowrap text-sm font-medium"
         >
@@ -110,6 +120,7 @@ export default function Nav() {
             <li key={l.href}>
               <a
                 href={l.href}
+                onClick={(e) => handleSectionLink(e, l.href)}
                 data-cursor="link"
                 className="font-mono-label group relative inline-block whitespace-nowrap py-1 text-xs font-medium text-ink transition-colors duration-300 ease-art hover:text-accent-blue"
               >
@@ -122,6 +133,7 @@ export default function Nav() {
 
         <MagneticButton
           href="#contact"
+          onClick={(e) => handleSectionLink(e, "#contact")}
           radius={70}
           layered={false}
           className="font-mono-label ml-auto hidden items-center whitespace-nowrap rounded-full border border-ink bg-ink px-4 py-2 text-xs text-paper transition-[background-color,color,box-shadow] duration-300 ease-art hover:bg-transparent hover:text-ink hover:shadow-[0_6px_18px_-6px_rgba(13,13,13,0.35)] md:flex"
@@ -203,7 +215,10 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           <li key={l.href} className="overflow-hidden">
             <a
               href={l.href}
-              onClick={onClose}
+              onClick={(e) => {
+                onClose();
+                handleSectionLink(e, l.href);
+              }}
               className="mobile-link block text-fluid-h2 leading-none tracking-tightest"
             >
               {l.label}

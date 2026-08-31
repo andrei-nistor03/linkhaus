@@ -3,6 +3,7 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import { gsap, registerGsap } from "@/lib/gsap";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
+import { GRID_LINE_COLOR, GRID_MAJOR_COLOR, GRID_MAJOR_RATIO, hexToRgba } from "@/lib/gridTheme";
 
 interface ServicesBackdropProps {
   /** Index (0-based) of whichever cluster is currently "active" per
@@ -13,7 +14,17 @@ interface ServicesBackdropProps {
   accents: string[];
 }
 
-const GRID_TILE = 64; // px — must match backgroundSize below exactly
+const GRID_TILE = 64; // px — minor line spacing; must match backgroundSize below exactly
+// Every GRID_MAJOR_RATIO-th line reads as a heavier "section" line, the same
+// two-tier rhythm (and the same GRID_LINE_COLOR/GRID_MAJOR_COLOR palette) as
+// the gallery floor grid in GalleryEnvironment.tsx — see gridTheme.ts for why
+// this is the "rhyme, not a shared object" version of continuing that motif
+// across the WebGL/CSS boundary.
+const GRID_MAJOR_TILE = GRID_TILE * GRID_MAJOR_RATIO;
+const GRID_MINOR_DIM = hexToRgba(GRID_LINE_COLOR, 0.055);
+const GRID_MAJOR_DIM = hexToRgba(GRID_MAJOR_COLOR, 0.1);
+const GRID_MINOR_LIT = hexToRgba(GRID_LINE_COLOR, 0.22);
+const GRID_MAJOR_LIT = hexToRgba(GRID_MAJOR_COLOR, 0.32);
 
 /**
  * Ambient backdrop for the dark Services section: a very faint drifting
@@ -152,9 +163,16 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
           ref={gridRef}
           className="absolute -inset-16"
           style={{
-            backgroundImage:
-              "linear-gradient(rgba(245,243,238,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(245,243,238,0.06) 1px, transparent 1px)",
-            backgroundSize: `${GRID_TILE}px ${GRID_TILE}px`,
+            // Major lines listed first so they paint on top of the minor
+            // lines at their shared intersections, same layering order as
+            // the sizes below.
+            backgroundImage: [
+              `linear-gradient(${GRID_MAJOR_DIM} 1px, transparent 1px)`,
+              `linear-gradient(90deg, ${GRID_MAJOR_DIM} 1px, transparent 1px)`,
+              `linear-gradient(${GRID_MINOR_DIM} 1px, transparent 1px)`,
+              `linear-gradient(90deg, ${GRID_MINOR_DIM} 1px, transparent 1px)`,
+            ].join(", "),
+            backgroundSize: `${GRID_MAJOR_TILE}px ${GRID_MAJOR_TILE}px, ${GRID_MAJOR_TILE}px ${GRID_MAJOR_TILE}px, ${GRID_TILE}px ${GRID_TILE}px, ${GRID_TILE}px ${GRID_TILE}px`,
           }}
         >
           {/* Brighter twin of the grid above, nested here so it shares this
@@ -169,9 +187,13 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
                 {
                   "--gx": "50%",
                   "--gy": "50%",
-                  backgroundImage:
-                    "linear-gradient(rgba(245,243,238,0.22) 1px, transparent 1px), linear-gradient(90deg, rgba(245,243,238,0.22) 1px, transparent 1px)",
-                  backgroundSize: `${GRID_TILE}px ${GRID_TILE}px`,
+                  backgroundImage: [
+                    `linear-gradient(${GRID_MAJOR_LIT} 1px, transparent 1px)`,
+                    `linear-gradient(90deg, ${GRID_MAJOR_LIT} 1px, transparent 1px)`,
+                    `linear-gradient(${GRID_MINOR_LIT} 1px, transparent 1px)`,
+                    `linear-gradient(90deg, ${GRID_MINOR_LIT} 1px, transparent 1px)`,
+                  ].join(", "),
+                  backgroundSize: `${GRID_MAJOR_TILE}px ${GRID_MAJOR_TILE}px, ${GRID_MAJOR_TILE}px ${GRID_MAJOR_TILE}px, ${GRID_TILE}px ${GRID_TILE}px, ${GRID_TILE}px ${GRID_TILE}px`,
                   maskImage:
                     "radial-gradient(ellipse 26% 22% at var(--gx) var(--gy), black, transparent 70%)",
                   WebkitMaskImage:
