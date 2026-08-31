@@ -85,8 +85,7 @@ const fragmentShader =  `
     vec2 pUv = uPointer * vec2(uAspect, 1.0) * 0.5;
     float pd = length(uv - pUv);
     float pointerGlow = smoothstep(0.55, 0.0, pd) * (0.2 + uHover * 0.55);
-    float ripple = smoothstep(0.02, 0.0, abs(fract(pd * 3.0 - t * 0.25) - 0.5) - 0.47) * 0.05 * (1.0 - uReduced);
-    col += paper * (pointerGlow + ripple);
+    col += paper * pointerGlow;
 
     col = mix(ink, col, clamp(uIntensity, 0.0, 1.0));
 
