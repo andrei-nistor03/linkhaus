@@ -100,7 +100,7 @@ function traceCapBoundaryLoops(
     while (curr !== start && guard++ < coords.length * 2) {
       loopIds.push(curr);
       const neighbors = adjacency.get(curr);
-      if (!neighbors || neighbors.length !== 2) break; // non-manifold boundary; bail on this loop
+      if (!neighbors || neighbors.length !== 2) break;
       const next = neighbors[0] === prev ? neighbors[1] : neighbors[0];
       const ek = curr < next ? `${curr}_${next}` : `${next}_${curr}`;
       visited.add(ek);
@@ -185,7 +185,6 @@ function makeBackingGeometry(source: THREE.BufferGeometry, extraPush: number) {
     loops.sort((a, b) => Math.abs(shoelaceArea(b)) - Math.abs(shoelaceArea(a)));
     outline = fillAxisAlignedNotches(loops[0]);
   } else {
-    // Fallback: plain bounding-box rectangle.
     outline = [
       new THREE.Vector2(box.min.x, box.min.y),
       new THREE.Vector2(box.max.x, box.min.y),
@@ -228,7 +227,7 @@ function makeGlowTexture(color: string, hotspot: [number, number]) {
   canvas.height = size;
   const ctx = canvas.getContext("2d")!;
   const hx = hotspot[0] * size;
-  const hy = (1 - hotspot[1]) * size; // canvas Y grows down; UV V grows up
+  const hy = (1 - hotspot[1]) * size;
   const tint = coreTint(color);
 
   const gradient = ctx.createRadialGradient(hx, hy, 0, hx, hy, size);
@@ -277,11 +276,6 @@ function BackingPanel({
     return makeGlowTexture(color, hotspot);
   }, [built, hotspotLocal, color]);
 
-  // The actual light source that shines through this panel's opening —
-  // parked right at the notch/gap in the wall's own coordinate space (same
-  // space the backing geometry above is built in), so it lines up with the
-  // hole in the front cap rather than sitting flush against the backing
-  // plane behind it.
   const openingPos = useMemo(() => {
     if (!built) return null;
     const { box } = built;
@@ -304,12 +298,6 @@ function BackingPanel({
     if (light.current) {
       light.current.intensity = 1.8 + breathe * 1.8 + scrollState.heroProgress * 2.6;
     }
-    // Drive the visible glow texture with the same breathe cycle as the
-    // point light it's paired with — previously only the (mostly hidden,
-    // occluded-by-the-front-cap) light pulsed, so the glow anyone actually
-    // sees on screen just sat there at a flat, constant brightness. Pulses
-    // via the material's color (brightness), not opacity — opacity stays
-    // at a solid 1 so the panel never goes see-through.
     if (material.current) {
       const brightness = 0.82 + breathe * 0.28 + scrollState.heroProgress * 0.1;
       material.current.color.setScalar(brightness);

@@ -1,17 +1,6 @@
-/**
- * Content for the Services section (components/sections/Services.tsx).
- * Presented as four editorial "clusters" rather than a card grid — each
- * cluster pairs a short manifesto-style `summary` with a handful of
- * concrete `items`. `accent` reuses tailwind.config.ts's `accent.*` palette,
- * the same one Projects/ProjectPanel draw from, so this section's rule
- * lines and hover states read as part of the same system rather than
- * introducing new colors.
- */
 export interface ServiceItem {
   title: string;
-  /** Optional supporting detail, rendered muted next to `title`. */
   detail?: string;
-  /** Longer copy revealed when the item's row is expanded (falls back to `detail`). */
   description?: string;
 }
 

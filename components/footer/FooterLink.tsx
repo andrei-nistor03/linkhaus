@@ -10,14 +10,6 @@ interface FooterLinkProps {
   onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
 }
 
-/**
- * One nav/social row in the footer: the same underline + sliding-arrow
- * hover language as Nav.tsx's own links and Contact.tsx's email CTA, riding
- * MagneticButton (`layered={false}` — a small shell-only pull, not the
- * exaggerated inner-content parallax the big Contact CTAs use) for the same
- * "leans toward the cursor" interaction used throughout the site, just at
- * the footer's calmer, smaller scale.
- */
 export default function FooterLink({ href, label, external, onClick }: FooterLinkProps) {
   return (
     <MagneticButton

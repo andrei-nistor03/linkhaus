@@ -5,27 +5,16 @@ import { gsap } from "@/lib/gsap";
 import type { LoadingStage } from "@/lib/useLoadingProgress";
 
 const PARTICLE_COUNT = 36;
-// A CSS length expression rather than a plain number so the ring scales
-// with viewport width between the clamped min/max instead of jumping at a
-// breakpoint.
 const RADIUS = "clamp(56px, 8vw, 104px)";
 
 interface LoadingVisualProps {
   progressRef: React.MutableRefObject<number>;
   stage: LoadingStage;
-  /** True for the ~0.6s burst once critical assets are ready. */
   exploding: boolean;
   reducedMotion: boolean;
   isTouch: boolean;
 }
 
-/** Small deterministic hash -> [0, 1), same shape as HalftoneBackground's.
- *  This component renders during SSR (Preloader isn't dynamically
- *  imported — it needs to paint before the rest of the client bundle is
- *  ready), so anything that varies per particle has to be seeded off the
- *  particle's own index rather than Math.random(), or the server and
- *  client would compute different values and React would flag a hydration
- *  mismatch on every particle. */
 function hash(i: number, salt: number) {
   let h = (i * 374761393 + salt * 668265263) | 0;
   h = (h ^ (h >>> 13)) * 1274126177;
@@ -33,21 +22,6 @@ function hash(i: number, salt: number) {
   return ((h >>> 0) % 100000) / 100000;
 }
 
-/**
- * The entire loading visual: a ring of particles arranged evenly around a
- * shared center, spinning continuously. Each particle sits at a fixed angle
- * on the ring (set once, via its own static `rotate()`); the whole ring
- * spins by animating one shared `rotateZ` on the container, and each
- * particle's own radius (its `translateY`) is what the progress fill and
- * the exit burst animate — so "how far from center" is the one property
- * doing double duty as both the loading indicator and the break-apart
- * effect, instead of two separate systems.
- *
- * Progress is shown by brightening the particles up to `progress%` of the
- * way around the ring — a "loading dial" made only of dots, no text or
- * bars. At 100%, every particle flies outward along its own angle and
- * fades, clearing the screen for the hero underneath.
- */
 export default function LoadingVisual({
   progressRef,
   stage,
@@ -58,9 +32,6 @@ export default function LoadingVisual({
   const tiltRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const dotRefs = useRef<(HTMLDivElement | null)[]>([]);
-  // The infinite spin tween itself, so its speed can be adjusted later
-  // (stage changes, the exit burst) without re-creating it — `timeScale`
-  // lives on the tween instance, not on the DOM element it animates.
   const spinTweenRef = useRef<gsap.core.Tween | null>(null);
 
   const particles = useMemo(
@@ -72,10 +43,6 @@ export default function LoadingVisual({
     [],
   );
 
-  // The ring's own continuous spin — independent of load progress, so the
-  // screen is visibly alive even while the network stalls. Speeds up once
-  // the load is nearly done (see useLoadingProgress's `stage`), reading as
-  // anticipation rather than just "faster for no reason".
   useEffect(() => {
     if (reducedMotion || !ringRef.current) return;
     const tween = gsap.to(ringRef.current, {
@@ -96,11 +63,6 @@ export default function LoadingVisual({
     spinTweenRef.current?.timeScale(speed);
   }, [stage]);
 
-  // Progress fill: brightens particles up to `progress%` around the ring,
-  // with a small brighter "head" right at the sweep edge. Written straight
-  // to each dot's style every frame rather than through React state/props
-  // — see useLoadingProgress's own comment for why nothing this frequent
-  // goes through a re-render.
   useEffect(() => {
     if (exploding) return;
     let raf = 0;
@@ -116,8 +78,6 @@ export default function LoadingVisual({
           opacity = 0.85;
           scale = 1;
         } else if (distanceFromEdge > 0) {
-          // The one particle currently at the sweep edge — brighter and
-          // slightly larger, like a comet head leading the fill.
           opacity = 1;
           scale = 1.4;
         } else {
@@ -133,9 +93,6 @@ export default function LoadingVisual({
     return () => cancelAnimationFrame(raf);
   }, [progressRef, exploding]);
 
-  // Mouse parallax tilt — a separate node from the one the continuous spin
-  // runs on, so the two rotations compose instead of one fighting the
-  // other for the same axis.
   useEffect(() => {
     if (reducedMotion || isTouch || !tiltRef.current) return;
     const el = tiltRef.current;
@@ -151,14 +108,9 @@ export default function LoadingVisual({
     return () => window.removeEventListener("pointermove", onMove);
   }, [reducedMotion, isTouch]);
 
-  // Exit: every particle rushes outward along its own fixed angle and
-  // fades, in place of a separate "explosion" object — the ring itself
-  // breaks apart.
   useEffect(() => {
     if (!exploding) return;
     const tl = gsap.timeline();
-    // `timeScale` lives on the tween instance, not on the element — see
-    // spinTweenRef above.
     spinTweenRef.current?.timeScale(reducedMotion ? 1 : 5);
     const nodes = dotRefs.current.filter((el): el is HTMLDivElement => el != null);
     tl.to(
@@ -199,9 +151,6 @@ export default function LoadingVisual({
                 style={{
                   width: p.size,
                   height: p.size,
-                  // `calc(-1 * RADIUS)` rather than a bare `-RADIUS` — CSS
-                  // doesn't allow negating a function (clamp()) with a
-                  // leading minus sign outside of calc().
                   transform: `translate(-50%, -50%) translateY(calc(-1 * ${RADIUS})) scale(var(--dot-scale, 0.7))`,
                 }}
               />

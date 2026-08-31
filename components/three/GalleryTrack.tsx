@@ -6,21 +6,6 @@ import * as THREE from "three";
 import { galleryState } from "@/lib/galleryState";
 import { trackOffsetX } from "@/lib/galleryLayout";
 
-/**
- * The one thing in this scene that actually moves with scroll. Wraps every
- * panel plus GalleryEnvironment and translates the whole group along x each
- * frame from galleryState.progress — the camera (GalleryCameraRig) stays
- * essentially planted, so every panel is carried past the same fixed
- * vantage point instead of a moving camera visiting each one on its own
- * path (which is what let different panels arrive at center under
- * different camera orientations and read as inconsistently "slanted").
- *
- * Publishes galleryState.focusX as the inverse of its own offset — the
- * local x that is currently centered in front of the camera — so
- * ProjectPanel's focus falloff (`|layout.position.x - focusX|`) keeps
- * working unchanged regardless of which side of the camera/scene relationship
- * is doing the moving.
- */
 export default function GalleryTrack({ children }: { children: ReactNode }) {
   const groupRef = useRef<THREE.Group>(null);
   const initialized = useRef(false);

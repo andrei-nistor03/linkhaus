@@ -12,15 +12,6 @@ import PanelGlow from "./PanelGlow";
 import { PROJECTS } from "@/components/projects/projectsData";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 
-/**
- * The 3D exhibition space Projects.tsx pins the page to. Opaque (unlike
- * HeroScene, which stays alpha-transparent so the halftone canvas behind it
- * shows through) — this section owns its own background, so it can run a
- * real fog/backdrop pass without HeroScene's postprocessing-vs-alpha
- * tradeoff applying here. GalleryBackdrop (not a plain `<color>`/`<fog>`
- * pair) owns that background/fog so it can animate paper -> dark as the
- * section comes into view — see that file.
- */
 export default function GalleryScene() {
   const isTouch = useIsTouch();
   const reduced = useReducedMotion();
@@ -36,15 +27,6 @@ export default function GalleryScene() {
       <GalleryBackdrop />
       <PerspectiveCamera makeDefault fov={32} position={[0, 0.18, 4.6]} near={0.1} far={24} />
 
-      {/*
-        The camera barely moves now (see GalleryCameraRig) — it's the scene
-        that travels past it (see GalleryTrack) — so this whole lighting
-        rig, sized to just the near-camera viewing area rather than the
-        full corridor, stays correctly aimed at whichever panels are
-        actually in view at any scroll position, rather than being spread
-        thin (or missed entirely) across a span the camera itself no longer
-        sweeps through.
-      */}
       <ambientLight intensity={0.55} />
       <directionalLight
         position={[3, 4, 5]}

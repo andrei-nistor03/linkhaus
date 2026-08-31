@@ -1,10 +1,3 @@
-/**
- * Placeholder work for the 3D showcase (components/sections/Projects.tsx +
- * components/three/Gallery*). `accent` picks one of tailwind.config.ts's
- * `accent.*` colors, which PanelMaterial.ts reads directly (as a THREE.Color
- * hex) to duotone-tint each panel's animated halftone shader — swap these
- * for real names/covers/links when actual case studies exist.
- */
 export interface Project {
   index: string;
   title: string;

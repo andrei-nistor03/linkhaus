@@ -14,12 +14,6 @@ const HeroScene = dynamic(() => import("@/components/three/HeroScene"), {
   loading: () => null,
 });
 
-// `pulseGap` is the idle animation's pause (ms) between one letter's
-// stretch-and-return finishing and the next one starting, for the idle
-// "rubber letter" loop below. The four content words read best pulsing
-// continuously, letter after letter with no gap; the three short
-// connector words get a full second to breathe between pulses so they
-// don't feel like they're constantly fidgeting.
 const HERO_WORDS: {
   text: string;
   size: string;
@@ -100,16 +94,10 @@ export default function Hero() {
   const bgDissolveRef = useRef<HTMLDivElement>(null);
 
   const titleDissolveRef = useRef<HTMLDivElement>(null);
-  // Every character of every scattered word gets its own DOM node here, in
-  // HERO_WORDS order — the per-letter scatter-and-stretch entrance (see
-  // LETTER_OFFSETS above) animates these directly, the same treatment
-  // "Welcome" alone used to get before all seven words started using it.
   const titleCharsRef = useRef<(HTMLSpanElement | null)[]>([]);
 
   const reducedMotion = useReducedMotion();
 
-  // Each word's starting index into the flat titleCharsRef array, so every
-  // word's <span> can register its characters at stable positions.
   const wordCharStarts = useMemo(() => {
     let i = 0;
     return HERO_WORDS.map((w) => {
@@ -122,34 +110,7 @@ export default function Hero() {
   useEffect(() => {
     registerGsap();
 
-    // Idle "rubber letter" pulse: once a word has finished entering, it
-    // periodically picks one of its own letters at random, stretches that
-    // letter out and pulls its immediate left/right neighbors in to make
-    // room, then springs everything back — and schedules its own next
-    // pulse after that word's own `pulseGap` (see HERO_WORDS). Each word
-    // runs its own fully independent loop, timed only against its own
-    // letter count, not the others — so a 4-pulse word never inherits the
-    // rhythm of a 2-letter one. Skipped entirely under reduced motion.
-    //
-    // scaleX alone can't drive this: a CSS transform doesn't reflow, so a
-    // stretching letter would just visually bleed into neighbors that
-    // "compressed" only in appearance, not in the space they occupy — they
-    // could still touch or overlap. Instead every letter's real rest-state
-    // width and position is measured fresh (getBoundingClientRect) right
-    // before each pulse, exact new left edges are computed for every
-    // letter that resizes, and each one gets a matching x offset alongside
-    // its scaleX so the animated edges land exactly where the math says,
-    // with the original inter-letter gap preserved throughout — letters
-    // right up against the stretch never touch, by construction. Letters
-    // outside the 3-letter window shift together as a rigid block to
-    // absorb whatever net width the window gains or loses; letters before
-    // the window don't move at all.
     const idleTimers: ReturnType<typeof setTimeout>[] = [];
-    // The letter index each word stretched last time, so the next pick can
-    // exclude it — otherwise Math.random() has no memory and the same
-    // letter can (and, over enough pulses, will) come up several times in
-    // a row, which reads as that one letter being singled out rather than
-    // the word cycling through itself.
     const lastPulseIndex: (number | null)[] = [];
 
     const scheduleIdlePulse = (wi: number, delay: number) => {
@@ -174,11 +135,6 @@ export default function Hero() {
       );
       const i = candidates[Math.floor(Math.random() * candidates.length)];
       lastPulseIndex[wi] = i;
-      // offsetWidth (layout width), not getBoundingClientRect — continuous
-      // words (see below) can have their next pulse start while a
-      // neighboring letter from the *previous* pulse is still mid-return,
-      // and getBoundingClientRect would report that letter's transformed,
-      // in-flight size instead of its true rest width.
       const widths = chars.map((el) => el.offsetWidth);
 
       const scale = new Array(n).fill(1);
@@ -188,9 +144,6 @@ export default function Hero() {
       const extra = widths[i] * (scale[i] - 1);
       const perNeighbor = neighborIdx.length ? extra / neighborIdx.length : 0;
       neighborIdx.forEach((k) => {
-        // Cap how much any one neighbor gives up so a narrow letter next
-        // to a wide, heavily-stretched one can't be squeezed past ~45%
-        // of its own width.
         const reduction = Math.min(perNeighbor, widths[k] * 0.55);
         scale[k] = 1 - reduction / widths[k];
       });
@@ -205,12 +158,6 @@ export default function Hero() {
 
       const OUT_DURATION = 1.1;
       const RETURN_DURATION = 1.05;
-      // Continuous words (gap 0) kick off their next letter's pulse as
-      // soon as this one's stretch-out peaks, not once the whole cycle
-      // (including the settle) finishes — so the next letter is already
-      // stretching while this one is still springing back, an overlapping
-      // cascade instead of a strict one-at-a-time queue. Gapped words wait
-      // out the full cycle plus their pause.
       const continuous = gap === 0;
 
       ctx.add(() => {
@@ -221,7 +168,7 @@ export default function Hero() {
           tl.call(() => scheduleIdlePulse(wi, 0), [], OUT_DURATION);
         }
         chars.forEach((el, k) => {
-          if (scale[k] === 1 && x[k] === 0) return; // untouched, nothing to tween
+          if (scale[k] === 1 && x[k] === 0) return;
           tl.to(
             el,
             {
@@ -233,8 +180,6 @@ export default function Hero() {
             0,
           );
         });
-        // Starts once the stretch-out fully finishes, not "<" (which would
-        // anchor to the previous tween's own start time — 0 — and race it).
         chars.forEach((el, k) => {
           if (scale[k] === 1 && x[k] === 0) return;
           tl.to(
@@ -278,12 +223,6 @@ export default function Hero() {
         },
       });
 
-      // Scroll-out: the title stays exactly where it is on screen (no
-      // position or scale change) and simply blurs out as it fades — kept
-      // deliberately separate from the entrance/idle animations above. The
-      // halftone canvas gets the identical treatment, in lockstep with the
-      // title, before the paper overlay covers everything. The 3D scene is
-      // deliberately excluded — it stays sharp all the way through.
       tl.to(
         [titleDissolveRef.current, bgDissolveRef.current],
         reducedMotion

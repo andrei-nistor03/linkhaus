@@ -11,18 +11,6 @@ import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 const DESKTOP_PARTICLES = 140;
 const TOUCH_PARTICLES = 45;
 
-/**
- * The Contact section's WebGL backdrop: one full-viewport shader plane
- * (ContactField) plus a drifting, cursor-reactive dot field
- * (ContactParticles). No postprocessing pass — the glow/light is baked
- * straight into the shader, which keeps this GPU-cheap (a handful of noise
- * evaluations per pixel, a few hundred points) and sidesteps the alpha
- * issues HeroScene's own comment flags for `@react-three/postprocessing`.
- *
- * Particles are dropped entirely under reduced motion (their whole point is
- * motion) and cut way down on touch, per the brief's performance/responsive
- * direction.
- */
 export default function ContactScene() {
   const isTouch = useIsTouch();
   const reducedMotion = useReducedMotion();

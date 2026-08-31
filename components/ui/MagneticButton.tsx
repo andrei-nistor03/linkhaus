@@ -10,13 +10,7 @@ interface MagneticButtonProps {
   children: React.ReactNode;
   className?: string;
   strength?: number;
-  /** How far beyond the button's own edges (in px) the pull starts. */
   radius?: number;
-  /**
-   * When true (default), the inner content moves further than the shell for
-   * a layered, physical feel. When false, the content rides along with the
-   * shell only — the two move as one solid unit.
-   */
   layered?: boolean;
   cursor?: "link" | "project" | "3d";
   target?: string;
@@ -24,17 +18,6 @@ interface MagneticButtonProps {
   onClick?: (e: ReactMouseEvent<HTMLAnchorElement>) => void;
 }
 
-/**
- * A button that leans toward the cursor as it approaches — the pull fades
- * in from `radius` px outside the button's edges and strengthens toward the
- * center, so it's already drifting before the cursor lands on it, not just
- * reacting once hovered. No-ops on touch devices.
- *
- * `className` must supply its own `display` utility (e.g. `flex`,
- * `inline-flex`, `hidden md:flex`) — the shell doesn't default to one, so a
- * caller-provided value like `hidden md:flex` isn't fighting a hardcoded
- * `inline-flex` at the same breakpoint.
- */
 export default function MagneticButton({
   href,
   children,
@@ -58,9 +41,6 @@ export default function MagneticButton({
 
     const setShellX = gsap.quickTo(shell, "x", { duration: 0.5, ease: "power3.out" });
     const setShellY = gsap.quickTo(shell, "y", { duration: 0.5, ease: "power3.out" });
-    // Inner content is a DOM child of the shell, so it already inherits the
-    // shell's transform for free. Only give it its own extra motion (on top
-    // of that) when a layered/parallax feel is wanted.
     const setInnerX = layered
       ? gsap.quickTo(inner, "x", { duration: 0.4, ease: "power3.out" })
       : null;
@@ -68,8 +48,6 @@ export default function MagneticButton({
       ? gsap.quickTo(inner, "y", { duration: 0.4, ease: "power3.out" })
       : null;
 
-    // Tracked on the document (not just the shell) so the pull can kick in
-    // from outside the button's own box, within `radius` of its edges.
     const onMove = (e: MouseEvent) => {
       const rect = shell.getBoundingClientRect();
       const relX = e.clientX - (rect.left + rect.width / 2);

@@ -1,40 +1,24 @@
 "use client";
 
-import { useEffect, useRef, type MouseEvent } from "react";
+import { useEffect, useRef } from "react";
 import { gsap, registerGsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/lib/useMediaQuery";
-import { requestSectionTransition } from "@/lib/navTransitionState";
+import { handleSectionLink } from "@/lib/navTransitionState";
 import MagneticButton from "@/components/ui/MagneticButton";
 import FooterBackdrop from "@/components/footer/FooterBackdrop";
 import FooterWordmark from "@/components/footer/FooterWordmark";
 import FooterLink from "@/components/footer/FooterLink";
 
-// A calmer echo of Contact.tsx's own EMAIL/PHONE constants, not a
-// duplicate of them by accident — same studio, same two numbers, which is
-// exactly why they match.
 const EMAIL = "hello@linkhaus.studio";
 const PHONE_DISPLAY = "+40 722 108 900";
 const PHONE_HREF = "+40722108900";
 
-// Same three destinations, in the same order, as Nav.tsx's own LINKS —
-// intentionally kept in lockstep with it rather than re-derived here, so
-// the header and the closing frame never quietly drift out of sync.
 const NAV_LINKS = [
   { label: "Work", href: "#work" },
   { label: "Services", href: "#services" },
   { label: "Contact", href: "#contact" },
 ];
 
-/** Same routing as Nav.tsx's handleSectionLink — every internal anchor here
- *  (footer nav links, back-to-top) triggers the loader-then-teleport
- *  transition instead of a smooth scroll. See lib/navTransitionState.ts. */
-function handleSectionLink(e: MouseEvent<HTMLAnchorElement>, href: string) {
-  e.preventDefault();
-  requestSectionTransition(href);
-}
-
-// Placeholder destinations — swap for the studio's real handles once they
-// exist.
 const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://instagram.com/linkhaus.studio" },
   { label: "Behance", href: "https://behance.net/linkhaus" },
@@ -44,16 +28,6 @@ const SOCIAL_LINKS = [
 
 const STACK = ["Next.js", "React", "Three.js", "GSAP"];
 
-/**
- * The site's final frame: energy -> resolution -> silence. Picks up
- * directly where Contact's climax leaves off — FooterBackdrop.tsx decays
- * that same atmosphere down to a quiet residue rather than cutting to a
- * plain dark footer — then settles into a compact wordmark/contact/nav
- * layout and a back-to-top control. Everything here is deliberately
- * quieter than Contact: smaller motion, no scale/skew, no pinned scroll
- * hold, and — unlike the rest of the page's sections — no big display
- * headline of its own; the wordmark carries that role instead.
- */
 export default function Footer() {
   const sectionRef = useRef<HTMLElement>(null);
   const wordmarkWrapRef = useRef<HTMLDivElement>(null);
@@ -65,10 +39,6 @@ export default function Footer() {
   const bottomRowRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
-  // One entrance timeline for the whole footer, triggered once as it
-  // arrives. Waits for fonts first (same reasoning as Contact.tsx/
-  // Services.tsx: font swaps can shift document height, which would bake a
-  // stale trigger position into anything set up before that settles).
   useEffect(() => {
     registerGsap();
     const section = sectionRef.current;
@@ -92,7 +62,11 @@ export default function Footer() {
         ].filter((el): el is Element => el != null);
 
         if (reducedMotion) {
-          gsap.set([...fadeUpTargets, bottomRowRef.current], { opacity: 1, y: 0 });
+          gsap.set([...fadeUpTargets, bottomRowRef.current], {
+            opacity: 1,
+            y: 0,
+            clearProps: "willChange",
+          });
           gsap.set(dividerRef.current, { scaleX: 1 });
           return;
         }
@@ -101,13 +75,6 @@ export default function Footer() {
         gsap.set(bottomRowRef.current, { opacity: 0, y: 16 });
         gsap.set(dividerRef.current, { scaleX: 0 });
 
-        // "top bottom" — fires the instant the footer starts entering the
-        // viewport, which lands at (or before) the document's actual max
-        // scroll position since this is the very last section on the
-        // page. A deeper trigger point ("top 85%" etc.) can silently never
-        // fire this close to the bottom — see Contact.tsx's own crescendo
-        // trigger and FooterBackdrop.tsx's decay scrub for the same
-        // reasoning applied elsewhere on this page.
         const tl = gsap.timeline({
           scrollTrigger: { trigger: section, start: "top bottom", once: true },
         });
@@ -120,7 +87,8 @@ export default function Footer() {
           stagger: 0.07,
         })
           .to(dividerRef.current, { scaleX: 1, duration: 0.9, ease: "power2.out" }, "-=0.5")
-          .to(bottomRowRef.current, { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, "-=0.35");
+          .to(bottomRowRef.current, { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, "-=0.35")
+          .set([...fadeUpTargets, bottomRowRef.current], { clearProps: "willChange" });
       }, sectionRef);
     };
 
@@ -140,19 +108,11 @@ export default function Footer() {
     <footer
       id="footer"
       ref={sectionRef}
-      // Contact and Footer share the exact same bg-ink, so with nothing
-      // marking the seam the two read as one uninterrupted section on
-      // scroll — a thin top border (the same bg-paper/10 hairline the
-      // divider further down uses) is the plainest way to say "the climax
-      // has ended, this is its own quiet coda" without another effect.
       className="relative overflow-hidden border-t border-paper/10 bg-ink px-5 pb-6 pt-14 text-paper sm:px-8 sm:pb-8 sm:pt-16"
     >
       <FooterBackdrop />
 
       <div className="relative z-10 mx-auto max-w-6xl">
-        {/* Asymmetric editorial row: wordmark/contact/meta on the left,
-            nav and socials recomposed into their own two columns on the
-            right — a deliberate mobile layout, not a plain stack. */}
         <div className="grid grid-cols-2 gap-x-8 gap-y-8 lg:grid-cols-[1.2fr_auto_auto] lg:gap-x-16">
           <div className="col-span-2 lg:col-span-1">
             <div ref={wordmarkWrapRef} style={{ willChange: "transform, opacity" }}>

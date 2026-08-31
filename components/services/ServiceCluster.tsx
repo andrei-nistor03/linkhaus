@@ -7,27 +7,11 @@ import type { ServiceClusterData } from "./servicesData";
 
 interface ServiceClusterProps {
   data: ServiceClusterData;
-  /** 0-based position among all clusters, for the "current / total" reading
-   *  in the number badge. */
   position: number;
   total: number;
-  /** Fired (with `position`) once this cluster becomes the "current" one —
-   *  Services.tsx uses it to tint the ambient backdrop and advance the
-   *  fixed rail label. */
   onActive: (position: number) => void;
 }
 
-/**
- * One numbered manifesto entry in the Services list. Owns its own entrance
- * choreography (number count-up, accent rule draw, masked heading, staggered
- * rows) and its own hover micro-interactions — everything here is scoped to
- * this cluster's own root, so Services.tsx only has to render four of these
- * and stay out of the way.
- *
- * The number/heading column is `lg:sticky` within this cluster's own (much
- * taller) row list — a pure-CSS "temporary pin" that releases naturally at
- * this cluster's bottom border, rather than a JS-driven ScrollTrigger pin.
- */
 export default function ServiceCluster({ data, position, total, onActive }: ServiceClusterProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const numberRef = useRef<HTMLSpanElement>(null);
@@ -80,9 +64,6 @@ export default function ServiceCluster({ data, position, total, onActive }: Serv
           .to(items, { yPercent: 0, opacity: 1, duration: 0.8, ease: "expo.out", stagger: 0.08 }, "-=0.5");
       }
 
-      // Marks this cluster "active" while its middle band crosses the
-      // middle of the viewport — independent of (and outliving) the
-      // one-shot reveal timeline above.
       ScrollTrigger.create({
         trigger: root,
         start: "top 55%",
@@ -129,10 +110,6 @@ export default function ServiceCluster({ data, position, total, onActive }: Serv
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-paper/50">{data.summary}</p>
         </div>
 
-        {/* Each row is a disclosure button rather than a link — there's no
-            per-service page to send visitors to, so clicking expands the
-            row in place to reveal `description` (falling back to `detail`)
-            instead of pointing an arrow at a dead destination. */}
         <ul className="lg:col-span-8">
           {data.items.map((item, i) => {
             const isOpen = openIndex === i;

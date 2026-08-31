@@ -31,9 +31,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Custom cursor: hide the native pointer only once JS confirms a fine
-   pointer is present (desktop). Applied via a class on <html> so touch
-   devices always keep their native cursor. */
 html.has-custom-cursor,
 html.has-custom-cursor a,
 html.has-custom-cursor button {
@@ -45,8 +42,6 @@ html.has-custom-cursor button {
   color: #f5f3ee;
 }
 
-/* Film grain overlay, fixed to viewport, sits above content, ignores
-   pointer events. Cheap SVG turbulence, no images fetched. */
 .grain {
   position: fixed;
   inset: 0;
@@ -68,50 +63,6 @@ html.has-custom-cursor button {
   text-transform: uppercase;
 }
 
-/* Utility for horizontal editorial rules */
-.hr-line {
-  border-top: 1px solid #dedad0;
-}
-
-/* Idle "floating in space" bob for hero copy. Deliberately out of phase and
-   different durations between the two lines so they don't move in lockstep.
-   Neutralized automatically by the prefers-reduced-motion rule below since
-   it zeroes animation-duration globally. */
-@keyframes hero-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-@keyframes hero-float-alt {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(10px);
-  }
-}
-.hero-float-slow {
-  animation: hero-float 7s ease-in-out infinite;
-  will-change: transform;
-}
-.hero-float-slow-alt {
-  animation: hero-float-alt 9s ease-in-out infinite;
-  animation-delay: 0.6s;
-  will-change: transform;
-}
-
-/* Idle animation for the Projects section's "Selected Work" label —
-   deliberately a different mechanism from the hero's per-letter pulse
-   (Hero.tsx): a continuous sine ripple through every letter (each one just
-   gets its own animation-delay, set inline per letter in Projects.tsx)
-   rather than one letter at a time stretching and springing back. Reads as
-   a slow, satisfying wave rather than a "fidgeting" cascade. Neutralized
-   automatically under prefers-reduced-motion by the rule below. */
 @keyframes label-wave {
   0%,
   100% {
@@ -127,15 +78,6 @@ html.has-custom-cursor button {
   will-change: transform;
 }
 
-/* "Lava lamp" idle effect for the Services section's headline ("Websites
-   that turn you into the obvious choice."). Four soft radial blobs, one per
-   accent color also used by the service cluster rows below it, drift slowly
-   behind the letterforms; an opaque linear-gradient base layer sits beneath
-   them so no glyph ever shows a gap between blobs. background-clip: text
-   restricts all of that to the glyphs themselves. Falls back to solid paper
-   text in browsers that can't clip a background to text (the base `color`
-   below), and is neutralized at rest by the prefers-reduced-motion rule
-   below since that zeroes animation-duration globally. */
 .services-lava-text {
   color: #f5f3ee;
 }
@@ -204,11 +146,6 @@ html.has-custom-cursor button {
   }
 }
 
-/* Footer's decaying ambient motes (FooterBackdrop.tsx) — a slow bob/pulse
-   rather than ContactParticles' continuous upward drift: this is the
-   atmosphere after the climax has passed, settling rather than still
-   streaming. Each mote gets its own animation-duration/delay inline so the
-   field doesn't read as one mechanical pulse. */
 @keyframes footer-mote {
   0%,
   100% {

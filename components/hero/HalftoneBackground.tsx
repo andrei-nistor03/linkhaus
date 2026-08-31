@@ -4,16 +4,11 @@ import { useEffect, useRef } from "react";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 
 const DOT_COLOR = "13, 13, 13";
-const HOVER_RADIUS = 200; // px, falloff radius around each trail point
-const TRAIL_SAMPLE_INTERVAL = 20; // ms between recorded trail points
-const TRAIL_DURATION = 1000; // ms a trail point keeps influencing dots before fully fading
+const HOVER_RADIUS = 200;
+const TRAIL_SAMPLE_INTERVAL = 20;
+const TRAIL_DURATION = 1000;
 const MAX_TRAIL_POINTS = 100;
 
-// Multiplier on how fast the idle terrain/grain noise drifts. 1 = current
-// speed; try ~0.3 for a slow, calm drift or 2-3+ for something busier. This
-// scales both noise layers together so their relative speeds (which keep
-// the motion looking diagonal/organic instead of a straight pan) stay
-// consistent — just change this one number to test.
 const IDLE_SPEED = 4;
 
 interface TrailPoint {
@@ -22,15 +17,10 @@ interface TrailPoint {
   t: number;
 }
 
-/** Smoothstep, used everywhere below instead of linear lerps so every fade
- *  (radial falloff, trail age, noise interpolation) eases in/out instead of
- *  changing at a constant rate — that's what reads as "smooth". */
 function smooth(t: number) {
   return t * t * (3 - 2 * t);
 }
 
-/** Small deterministic integer hash -> [0, 1). No Math.random anywhere, so
- *  the field is stable across frames; only its (x, y, t) inputs move. */
 function hash(ix: number, iy: number) {
   let h = ix * 374761393 + iy * 668265263;
   h = (h ^ (h >>> 13)) * 1274126177;
@@ -38,9 +28,6 @@ function hash(ix: number, iy: number) {
   return ((h >>> 0) % 100000) / 100000;
 }
 
-/** Classic bilinear value noise. Unlike sin(x)*cos(y), it has no repeating
- *  grid-aligned symmetry — it reads as organic, patchy "terrain" instead of
- *  a checkerboard. */
 function valueNoise(x: number, y: number) {
   const x0 = Math.floor(x);
   const y0 = Math.floor(y);
@@ -122,13 +109,10 @@ export default function HalftoneBackground() {
         for (let ix = 0; ix < cols; ix++) {
           const x = ix * spacing;
 
-          // Broad, drifting noise: which patches of the field sit "higher"
-          // right now (bigger base dots, bigger size ceiling).
           const terrain = valueNoise(
             x * 0.0085 + t * 0.16 * IDLE_SPEED,
             y * 0.0085 - t * 0.11 * IDLE_SPEED,
           );
-          // Finer, faster noise layered on top for texture within a patch.
           const grain = valueNoise(
             x * 0.03 - t * 0.3 * IDLE_SPEED,
             y * 0.03 + t * 0.24 * IDLE_SPEED,

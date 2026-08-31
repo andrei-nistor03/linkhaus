@@ -14,26 +14,11 @@ const RING_SIZE: Record<Variant, number> = {
   "3d": 140,
 };
 
-/**
- * Desktop-only custom cursor with a fast dot and a lagging ring. Interactive
- * elements opt in via `data-cursor="link" | "project" | "3d"` so the cursor
- * communicates intent (view a project, drag a 3D scene) instead of being
- * purely decorative.
- *
- * The whole cursor is rendered in white and blended onto the page with
- * `mix-blend-mode: difference`, so it always inverts whatever is beneath
- * it — a thin ink-colored ring reads fine on plain paper but gets lost
- * over the halftone texture or a dark section; differencing stays visible
- * everywhere without per-section color logic.
- */
 export default function CustomCursor() {
   const isTouch = useIsTouch();
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const [domVariant, setDomVariant] = useState<Variant>("default");
-  // Wins over `domVariant` whenever a 3D scene (no real DOM hover target to
-  // attach `data-cursor` to) pushes one via lib/cursorState.ts — see
-  // ProjectPanel.tsx.
   const [override, setOverride] = useState<Variant | null>(null);
   const variant = override ?? domVariant;
 
@@ -50,25 +35,20 @@ export default function CustomCursor() {
     const setDotY = gsap.quickTo(dot, "y", { duration: 0.12, ease: "power3.out" });
     const setRingX = gsap.quickTo(ring, "x", { duration: 0.45, ease: "power3.out" });
     const setRingY = gsap.quickTo(ring, "y", { duration: 0.45, ease: "power3.out" });
+    const setRingRotate = gsap.quickTo(ring, "rotate", { duration: 0.3, ease: "power1.out" });
 
     let lastX = window.innerWidth / 2;
-    let lastY = window.innerHeight / 2;
     let velocity = 0;
 
     const onMove = (e: PointerEvent) => {
       const dx = e.clientX - lastX;
       velocity = gsap.utils.clamp(-1, 1, dx / 40);
       lastX = e.clientX;
-      lastY = e.clientY;
       setDotX(e.clientX);
       setDotY(e.clientY);
       setRingX(e.clientX);
       setRingY(e.clientY);
-      gsap.to(ring, {
-        rotate: velocity * 18,
-        duration: 0.3,
-        overwrite: "auto",
-      });
+      setRingRotate(velocity * 18);
     };
 
     const onOver = (e: MouseEvent) => {

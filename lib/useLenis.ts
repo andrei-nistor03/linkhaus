@@ -5,11 +5,6 @@ import Lenis from "lenis";
 import { gsap, ScrollTrigger, registerGsap } from "./gsap";
 import { lenisState } from "./lenisState";
 
-/**
- * Boots Lenis smooth-scroll and wires its scroll events into GSAP's ticker
- * so ScrollTrigger stays perfectly in sync with the eased scroll position,
- * instead of the raw (jumpy) native scroll event.
- */
 export function useLenis() {
   useEffect(() => {
     registerGsap();

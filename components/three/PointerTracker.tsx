@@ -4,11 +4,6 @@ import { useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { scrollState } from "@/lib/scrollState";
 
-/**
- * Writes raw pointer position into scrollState (as NDC, -1..1) and eases it
- * toward the target every frame. Kept separate from ParticleField/CameraRig
- * so both can read the same smoothed value without duplicating the lerp.
- */
 export default function PointerTracker() {
   useEffect(() => {
     const onMove = (e: PointerEvent) => {

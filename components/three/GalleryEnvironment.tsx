@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Grid, Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -13,13 +13,6 @@ const DUST_COUNT = 160;
 const MOTE_COUNT = 70;
 const FLOOR_Y = -1.15;
 
-// Local-x range every particle is scattered across — the *full* corridor,
-// padded a bit past each end, not a small band recentered on the camera.
-// GalleryEnvironment is a child of GalleryTrack, the same group that carries
-// every panel/stud/grid line, so leaving particle x alone (instead of
-// re-adding galleryState.focusX every frame the way an earlier version did)
-// is what makes them scroll along with the rest of the environment rather
-// than sitting parallax-locked in front of the camera.
 const FIELD_PAD = 10;
 const X_MIN = -FIELD_PAD;
 const X_MAX = TOTAL_SPAN + FIELD_PAD;
@@ -27,34 +20,17 @@ const X_SPAN = X_MAX - X_MIN;
 const Y_MIN = -1;
 const Y_MAX = 2;
 const Y_SPAN = Y_MAX - Y_MIN;
-// Kept behind the panel plane (z=0) so nothing ever drifts in front of a
-// centered panel and reads as an obstruction.
 const Z_MIN = -3.6;
 const Z_MAX = -0.6;
 
-// How far a flake reaches out for the cursor before it starts pushing back,
-// and how hard it gets shoved at point-blank range. The push target is
-// still expressed in *screen*-relative terms (scrollState.pointerEased, the
-// same eased signal GalleryCameraRig reads) but has to be converted into
-// this field's fixed local space via galleryState.focusX — the local x
-// currently centered in front of the camera — since the particles
-// themselves no longer recenter on it.
 const REPEL_RADIUS = 2;
 const REPEL_STRENGTH = 1.1;
 
-// A steady trickle of flakes spontaneously combust: a quick grow-then-vanish
-// flash on the flake itself, a firecracker spray of shrapnel debris flung
-// outward from that spot, and a pooled point light that actually lights the
-// flakes and grid around it for a beat, then the flake reseeds elsewhere in
-// the field.
-const COMBUST_RATE = 0.02; // ignition chance per particle per second
-const BURN_GROW = 0.12; // seconds spent flaring up before vanishing
-const BURN_DURATION = 0.42; // total seconds a flake stays "burning"
+const COMBUST_RATE = 0.02;
+const BURN_GROW = 0.12;
+const BURN_DURATION = 0.42;
 const BURN_PEAK_SCALE = 2.6;
 
-// Each ignition flings this many shrapnel pieces outward; DEBRIS_POOL is
-// the total number of concurrently-animatable pieces shared across every
-// simultaneous explosion (round-robin recycled, not allocated per event).
 const SHRAPNEL_PER_IGNITE = 12;
 const DEBRIS_POOL = 168;
 const DEBRIS_LIFE_MIN = 0.3;
@@ -162,28 +138,6 @@ function makeDebrisPool(count: number): DebrisState[] {
   }));
 }
 
-/**
- * The corridor's supporting architecture: a faint drafting-table floor
- * grid, one thin vertical stud grounding each panel to that floor (echoing
- * the wall/doorway geometry from the hero's 3D model rather than inventing
- * an unrelated visual language), and a field of drifting, cursor-reactive
- * white dust — small instanced polyhedra (not flat sprite points, which
- * never read as more than a smear here) that rise, tumble, and wrap back to
- * the floor as they travel the corridor with everything else. The flake
- * material is self-lit (emissive, untouched by the renderer's tone curve)
- * so it reads as clean white with a soft glow rather than the grey a
- * plain-lit flat-shaded material picks up from grazing light angles.
- *
- * A steady trickle of flakes spontaneously combust — flaring and vanishing
- * while a firecracker spray of shrapnel debris flings outward and a real
- * point light flashes at that spot — then reseed elsewhere, all pooled
- * across a fixed number of concurrent debris pieces/lights rather than
- * spawning new objects per event. Reaching the cursor into the
- * field gently pushes nearby flakes out of the way, the same "the scene
- * notices you" idea as the panels' own tilt-toward-cursor. (Each panel's
- * own violet glow lives in PanelGlow.tsx, rendered alongside ProjectPanel
- * in GalleryScene.tsx, not here.)
- */
 export default function GalleryEnvironment({
   reducedMotion = false,
 }: {
@@ -284,10 +238,7 @@ export default function GalleryEnvironment({
     debrisMaterial,
   ]);
 
-  // Firecracker spray: SHRAPNEL_PER_IGNITE pieces flung out in random
-  // directions (mild upward kick, gravity pulls them back down over their
-  // short life) rather than one expanding shockwave shell.
-  const spawnCombustion = (x: number, y: number, z: number) => {
+  const spawnCombustion = useCallback((x: number, y: number, z: number) => {
     for (let k = 0; k < SHRAPNEL_PER_IGNITE; k++) {
       const d = debris[nextDebris.current % DEBRIS_POOL];
       nextDebris.current++;
@@ -322,17 +273,15 @@ export default function GalleryEnvironment({
     light.x = x;
     light.y = y;
     light.z = z;
-  };
+  }, [debris, lights]);
 
-  useFrame((_, rawDelta) => {
-    const delta = Math.min(rawDelta, 1 / 30);
-    const pointer = scrollState.pointerEased;
-    const pushOriginX = galleryState.focusX + pointer.x * (X_SPAN * 0.12);
-    const pushOriginY = -pointer.y * (Y_SPAN * 0.5);
-
-    const updateField = (
+  const updateField = useCallback(
+    (
       mesh: THREE.InstancedMesh | null,
       states: FlakeState[],
+      delta: number,
+      pushOriginX: number,
+      pushOriginY: number,
     ) => {
       if (!mesh) return;
       for (let i = 0; i < states.length; i++) {
@@ -410,10 +359,18 @@ export default function GalleryEnvironment({
         mesh.setMatrixAt(i, dummy.matrix);
       }
       mesh.instanceMatrix.needsUpdate = true;
-    };
+    },
+    [dummy, reducedMotion, spawnCombustion],
+  );
 
-    updateField(dustRef.current, dustStates);
-    updateField(moteRef.current, moteStates);
+  useFrame((_, rawDelta) => {
+    const delta = Math.min(rawDelta, 1 / 30);
+    const pointer = scrollState.pointerEased;
+    const pushOriginX = galleryState.focusX + pointer.x * (X_SPAN * 0.12);
+    const pushOriginY = -pointer.y * (Y_SPAN * 0.5);
+
+    updateField(dustRef.current, dustStates, delta, pushOriginX, pushOriginY);
+    updateField(moteRef.current, moteStates, delta, pushOriginX, pushOriginY);
 
     const debrisMesh = debrisRef.current;
     if (debrisMesh) {

@@ -6,16 +6,6 @@ import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 
 const WORD = "LINKHAUS";
 
-/**
- * The footer's own, larger wordmark lockup — links back to #top (the same
- * jump target as Nav.tsx's own logo), so it doubles as a second, more
- * prominent "back to top" affordance alongside the explicit one at the very
- * bottom of the page. On desktop, hovering nudges each letter up in a tight
- * stagger and lets it settle back — restrained (a few px, no rotation or
- * color change), not the continuous idle wave Projects/Services use for
- * their section labels: this only plays on intent (hover), matching the
- * footer's calmer "energy has passed" register.
- */
 export default function FooterWordmark() {
   const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const isTouch = useIsTouch();

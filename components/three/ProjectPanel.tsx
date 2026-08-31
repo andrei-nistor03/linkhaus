@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { RoundedBox, Html } from "@react-three/drei";
 import * as THREE from "three";
@@ -25,26 +25,13 @@ interface ProjectPanelProps {
 
 const MAX_TILT = 0.16;
 
-/**
- * One floating panel in the corridor: a beveled card (RoundedBox, so it
- * catches the key light like real geometry rather than a flat billboard)
- * running the animated halftone "video" shader from PanelMaterial.ts, plus
- * two DOM captions (drei's `Html`, `distanceFactor` mode — see the comment
- * above the first one for why not `transform` mode).
- *
- * Hover state is read straight off R3F's own pointer events on the mesh —
- * no need to project screen-space hit boxes — and is broadcast two places:
- * `galleryState.hoveredIndex` (so GalleryEnvironment/other panels could
- * react too) and `setCursorOverride` (so CustomCursor, which only listens
- * for real DOM `data-cursor` hovers by default, shows its "VIEW PROJECT"
- * ring while over a mesh that has no DOM node of its own to tag).
- */
 export default function ProjectPanel({ project, index, reducedMotion }: ProjectPanelProps) {
   const layout = useMemo(() => panelLayout(index), [index]);
   const material = useMemo(
     () => createPanelMaterial(project.accent, index * 1.37 + 0.4),
     [project.accent, index],
   );
+  useEffect(() => () => material.dispose(), [material]);
 
   const outerRef = useRef<THREE.Group>(null);
   const innerRef = useRef<THREE.Group>(null);
@@ -66,10 +53,6 @@ export default function ProjectPanel({ project, index, reducedMotion }: ProjectP
     const focus = THREE.MathUtils.clamp(1 - dist / FOCUS_WINDOW, 0, 1);
     const focusSmooth = focus * focus * (3 - 2 * focus);
 
-    // Eases the panel's resting serpentine tilt out to exactly 0 as it
-    // nears center — every panel is dead parallel to the camera at the
-    // same moment (peak focus), regardless of which side of the aisle it
-    // rests on, then leans back into its tilt as it drifts away again.
     if (outerRef.current) {
       outerRef.current.rotation.y = layout.rotationY * (1 - focusSmooth);
     }
@@ -96,10 +79,13 @@ export default function ProjectPanel({ project, index, reducedMotion }: ProjectP
 
     const captionOpacity = 0.3 + focusSmooth * 0.6 + hover.current * 0.1;
     const lift = (1 - focusSmooth) * 6;
-    for (const el of [captionTopRef.current, captionBottomRef.current]) {
-      if (!el) continue;
-      el.style.opacity = String(captionOpacity);
-      el.style.transform = `translateY(${lift}px)`;
+    if (captionTopRef.current) {
+      captionTopRef.current.style.opacity = String(captionOpacity);
+      captionTopRef.current.style.transform = `translateY(${lift}px)`;
+    }
+    if (captionBottomRef.current) {
+      captionBottomRef.current.style.opacity = String(captionOpacity);
+      captionBottomRef.current.style.transform = `translateY(${lift}px)`;
     }
   });
 
@@ -142,19 +128,6 @@ export default function ProjectPanel({ project, index, reducedMotion }: ProjectP
         </RoundedBox>
       </group>
 
-      {/*
-        `distanceFactor` (a billboard that scales with camera distance), not
-        `transform` (a full 3D-perspective matrix3d) — captions in this
-        corridor are very often viewed obliquely, since the camera is
-        usually approaching or leaving whichever panel is in frame rather
-        than looking straight at it, and any off-axis skew on a
-        `transform`-mode Html is enough to make the browser rasterize its
-        text as an illegible blur (confirmed by testing: still blurred even
-        with zero rotation on every one of the Html's own ancestors — the
-        camera's own oblique viewing angle alone was doing it). Billboarding
-        keeps captions flat to the screen, like real gallery labels, so they
-        stay crisp at any angle while still growing/shrinking with depth.
-      */}
       <Html
         center
         distanceFactor={4.6}

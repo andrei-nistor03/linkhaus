@@ -11,15 +11,6 @@ function smoothstep(t: number) {
   return c * c * (3 - 2 * c);
 }
 
-/**
- * Owns the WebGL scene's background and fog color — animated, so it isn't a
- * plain `<color>`/`<fog>` JSX pair like HeroScene's. The gallery opens on
- * the hero's own paper tone and, once the pin actually engages (not before
- * — this reads galleryState.progress, which sits at 0 until then), dims to
- * a dark exhibition space over the first ENTRY_FADE_FRACTION of the scroll.
- * Projects.tsx crossfades its HUD chrome on the same fraction so the DOM
- * layer and the WebGL layer land in sync.
- */
 export default function GalleryBackdrop() {
   const scene = useThree((state) => state.scene);
   const paper = useMemo(() => new THREE.Color(SCENE_PAPER), []);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { contactState } from "@/lib/contactState";
@@ -14,9 +14,6 @@ const REPEL_STRENGTH = 2.6;
 const DAMPING = 0.9;
 const DRIFT_SPEED = 0.06;
 
-/** Soft round sprite, drawn once to a small canvas — the same
- *  "canvas-texture-as-glow" technique PulsatingLight.tsx uses for its own
- *  billboarded planes, here at dot scale. */
 function makeDotTexture() {
   const size = 64;
   const canvas = document.createElement("canvas");
@@ -35,21 +32,6 @@ function makeDotTexture() {
   return tex;
 }
 
-/**
- * A field of soft glowing dots drifting slowly upward through the Contact
- * backdrop, wandering the full width of the environment (each one keeps its
- * own sine-driven horizontal path, not just a straight climb) and gently
- * repelled by the cursor — a velocity-based push + damping, not a direct
- * position snap, so the reaction reads as smooth interpolation rather than
- * particles rigidly tracking the mouse. Deliberately never pulled toward any
- * one point (an earlier version drew them inward late in the scroll as a
- * "converge on the CTA" beat — it read as clutter, not atmosphere, so it's
- * gone: these just keep floating).
- *
- * Positions live in a plain Float32Array mutated directly each frame — a
- * React-managed array of point objects would mean recreating the whole
- * buffer every tick for a couple hundred points doing nothing but drifting.
- */
 export default function ContactParticles({ count }: ContactParticlesProps) {
   const pointsRef = useRef<THREE.Points>(null);
 
@@ -69,6 +51,9 @@ export default function ContactParticles({ count }: ContactParticlesProps) {
   }, [count]);
 
   const texture = useMemo(() => makeDotTexture(), []);
+  useEffect(() => () => texture.dispose(), [texture]);
+
+  const pointerWorld = useRef({ x: 0, y: 0 }).current;
 
   useFrame((state, rawDelta) => {
     const points = pointsRef.current;
@@ -76,10 +61,8 @@ export default function ContactParticles({ count }: ContactParticlesProps) {
     const delta = Math.min(rawDelta, 1 / 30);
     const t = state.clock.elapsedTime;
     const vp = state.viewport;
-    const pointerWorld = {
-      x: (contactState.pointerEased.x * vp.width) / 2,
-      y: (contactState.pointerEased.y * vp.height) / 2,
-    };
+    pointerWorld.x = (contactState.pointerEased.x * vp.width) / 2;
+    pointerWorld.y = (contactState.pointerEased.y * vp.height) / 2;
 
     const posAttr = points.geometry.attributes.position as THREE.BufferAttribute;
     const bound = vp.height / 2 + 1;
@@ -89,10 +72,6 @@ export default function ContactParticles({ count }: ContactParticlesProps) {
       const px = positions[ix];
       const py = positions[ix + 1];
 
-      // Sine wander — two mismatched frequencies per particle (each keyed
-      // off its own phase, so none of them sync up) rather than one, so the
-      // path each dot idles along reads as a lazy meander across the width
-      // of the field instead of a small bob in place.
       const wobble =
         Math.sin(t * 0.17 + phases[i]) * 0.006 + Math.sin(t * 0.06 + phases[i] * 1.7) * 0.0045;
       let vx = velocities[i * 2] + wobble;

@@ -1,24 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { Billboard } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { galleryState } from "@/lib/galleryState";
 import { panelLayout, FOCUS_WINDOW } from "@/lib/galleryLayout";
 
-/**
- * A direct replica of the hero's pulsing violet backdrop
- * (components/three/PulsatingLight.tsx — same radial-gradient-on-an-
- * additive-billboard glow plane, same sunburst-rays plane, same idle
- * "breathe" pulse, same point light), duplicated here rather than shared so
- * PulsatingLight.tsx and the hero it lights stay untouched. One instance is
- * parked behind every ProjectPanel instead of the one behind the hero's 3D
- * mark. In place of the hero's `scrollState.heroProgress` boost (the glow
- * brightening as the camera dollies toward the object), this version reads
- * how in-focus or hovered *this* panel currently is — the same "closer to
- * you, brighter" idea, driven by the gallery's own state instead.
- */
 
 function makeBackdropTexture() {
   const size = 512;
@@ -84,10 +72,6 @@ function makeRaysTexture() {
   return tex;
 }
 
-// Every panel's glow is visually identical (same gradient, same rays) —
-// generated once on first use and shared by every PanelGlow instance
-// instead of six separate components each drawing their own copy of the
-// same 512px canvas.
 let sharedBackdropTexture: THREE.CanvasTexture | null = null;
 let sharedRaysTexture: THREE.CanvasTexture | null = null;
 function getBackdropTexture() {
@@ -100,7 +84,7 @@ function getRaysTexture() {
 }
 
 export default function PanelGlow({ index, phase = 0 }: { index: number; phase?: number }) {
-  const layoutX = panelLayout(index).position.x;
+  const layoutX = useMemo(() => panelLayout(index).position.x, [index]);
   const groupRef = useRef<THREE.Group>(null);
   const material = useRef<THREE.MeshBasicMaterial>(null);
   const mesh = useRef<THREE.Mesh>(null);
@@ -108,21 +92,13 @@ export default function PanelGlow({ index, phase = 0 }: { index: number; phase?:
   const rays = useRef<THREE.Mesh>(null);
   const light = useRef<THREE.PointLight>(null);
   const t = useRef(0);
-  // Eased separately from `boost` below (which also folds in focus, for
-  // brightness) — this one exists purely to mirror ProjectPanel's own
-  // `hover.current * 0.24` forward pop on identical terms, so the glow
-  // rides forward with its panel on hover instead of being left behind at
-  // a fixed depth while the card in front of it pops toward the camera.
   const hoverEase = useRef(0);
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 1 / 30);
     t.current += delta;
-    const breathe = 0.5 + Math.sin(t.current * 1.4 + phase) * 0.3; // 0.2 .. 0.8
+    const breathe = 0.5 + Math.sin(t.current * 1.4 + phase) * 0.3;
 
-    // Same role as the hero's scrollState.heroProgress boost — "brighter
-    // the closer it is to being the one you're looking at" — just driven
-    // by this panel's own focus/hover instead of a scroll-through-a-door.
     const dist = Math.abs(layoutX - galleryState.focusX);
     const focus = THREE.MathUtils.clamp(1 - dist / FOCUS_WINDOW, 0, 1);
     const focusSmooth = focus * focus * (3 - 2 * focus);
@@ -152,13 +128,6 @@ export default function PanelGlow({ index, phase = 0 }: { index: number; phase?:
     }
   });
 
-  // z offsets pulled way in from the hero's original -1.7/-1.8/-1.85 (tuned
-  // for a camera that stood back and stayed put) — this gallery's camera
-  // pans with the cursor and pops each panel forward on hover, and at the
-  // original distance the glow sat far enough behind that it visibly
-  // parallaxed at a different rate than its panel, reading as if the two
-  // weren't actually attached. Sitting just behind the card instead keeps
-  // both close enough to the same depth that they move together.
   return (
     <group ref={groupRef} position={[layoutX, 0, 0]}>
       <Billboard position={[0, 0, -0.55]}>

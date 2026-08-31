@@ -24,17 +24,9 @@ const config: Config = {
       fontFamily: {
         grotesk: ["var(--font-grotesk)", "Helvetica Neue", "Arial", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
-        // System Helvetica stack (no webfont — Helvetica itself isn't
-        // licensable for the web) for the hero copy specifically, per
-        // request. Falls through to Helvetica Neue, then Arial, which are
-        // metric-compatible on every platform that lacks true Helvetica.
-        helvetica: ["Helvetica", "Helvetica Neue", "Arial", "sans-serif"],
-        // Thunder (HC): the display face for the hero title/subtitle.
         display: ["var(--font-thunder)", "Helvetica", "Helvetica Neue", "Arial", "sans-serif"],
       },
       fontSize: {
-        "fluid-hero": "clamp(3.2rem, 10vw, 9.5rem)",
-        "fluid-h1": "clamp(2.4rem, 6vw, 5.5rem)",
         "fluid-h2": "clamp(1.8rem, 4vw, 3.4rem)",
       },
       letterSpacing: {

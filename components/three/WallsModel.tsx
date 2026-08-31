@@ -62,10 +62,6 @@ export default function WallsModel(props: ThreeElements["group"]) {
       mat.color.set("#ffffff");
       mat.roughness = 0.85;
       mat.metalness = 0;
-      // Trimmed down from 1.35 alongside HeroScene's dimmer Lightformers —
-      // full strength let the all-directions environment map act as a
-      // second, uncontrolled light source and wash out the single-sided
-      // key light's shadow.
       mat.envMapIntensity = 0.45;
       mat.needsUpdate = true;
     }
@@ -74,10 +70,6 @@ export default function WallsModel(props: ThreeElements["group"]) {
   useEffect(() => {
     const group = content.current;
     if (!group) return;
-    // Walk the whole subtree rather than assuming every direct child is a
-    // mesh — WallGlowBacking nests its mesh (and now a pointLight) inside
-    // its own <group> per panel, so this needs to find meshes at any depth
-    // and express their bounds in `group`'s local space via matrixWorld.
     group.updateWorldMatrix(true, true);
     const invGroupWorld = new THREE.Matrix4().copy(group.matrixWorld).invert();
     const relative = new THREE.Matrix4();

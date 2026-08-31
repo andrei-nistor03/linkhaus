@@ -10,11 +10,6 @@ interface State {
   hasError: boolean;
 }
 
-/**
- * WebGL context creation or asset loading can fail on old hardware/browsers.
- * Rather than take the whole page down, fall back to a static gradient so
- * the hero copy and layout still read cleanly.
- */
 export default class SceneErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 

@@ -1,25 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { INTRO_COMPLETE_EVENT } from "./Preloader";
 import MagneticButton from "@/components/ui/MagneticButton";
-import { requestSectionTransition } from "@/lib/navTransitionState";
+import { handleSectionLink } from "@/lib/navTransitionState";
 
 const LINKS = [
   { label: "Work", href: "#work" },
   { label: "Services", href: "#services" },
   { label: "Contact", href: "#contact" },
 ];
-
-/** Every internal anchor in Nav (logo, links, mobile menu, the CTA) routes
- *  through this instead of a plain hash jump / Lenis smooth scroll — see
- *  lib/navTransitionState.ts and SectionTransitionOverlay.tsx for the
- *  loader-then-teleport transition it triggers. */
-function handleSectionLink(e: MouseEvent<HTMLAnchorElement>, href: string) {
-  e.preventDefault();
-  requestSectionTransition(href);
-}
 
 const PILL_THRESHOLD = 48;
 
@@ -65,12 +56,6 @@ export default function Nav() {
     };
   }, []);
 
-  // All shape/position/color properties animate through one GSAP tween so
-  // they update on the same rAF tick. Previously width was GSAP-driven while
-  // left/transform/padding/etc. transitioned via CSS — the two engines tick
-  // independently, and since the pill centers itself with left:50% +
-  // translateX(-50%) (a value that depends on the *current* width), any
-  // drift between the two caused a visible wobble instead of a clean glide.
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
