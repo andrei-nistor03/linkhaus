@@ -237,23 +237,23 @@ export default function Contact() {
               <span className="relative inline-block font-display font-black lowercase text-paper transition-transform duration-500 ease-art [font-variation-settings:'wght'_800,'CNTR'_0] text-[clamp(1.5rem,4.4vw,3.4rem)] group-hover:-skew-x-2 group-hover:scale-[1.015]">
                 {EMAIL}
                 <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-accent-violet transition-transform duration-500 ease-art group-hover:scale-x-100 sm:-bottom-2" />
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  className="absolute left-full top-1/2 ml-2 -translate-x-2 -translate-y-1/2 text-paper opacity-0 transition-all duration-500 ease-art group-hover:translate-x-0 group-hover:opacity-100 sm:ml-3 sm:h-9 sm:w-9"
+                >
+                  <path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </span>
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-                className="shrink-0 -translate-x-2 text-paper opacity-0 transition-all duration-500 ease-art group-hover:translate-x-0 group-hover:opacity-100 sm:h-9 sm:w-9"
-              >
-                <path
-                  d="M5 12h14M13 6l6 6-6 6"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
             </MagneticButton>
 
             <MagneticButton

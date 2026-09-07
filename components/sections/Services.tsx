@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { gsap, ScrollTrigger, SplitText, registerGsap } from "@/lib/gsap";
-import { useReducedMotion } from "@/lib/useMediaQuery";
+import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import ServicesBackdrop from "@/components/services/ServicesBackdrop";
 import ServiceCluster from "@/components/services/ServiceCluster";
 import WaveLabel from "@/components/ui/WaveLabel";
@@ -17,10 +17,23 @@ const ACCENTS = SERVICE_CLUSTERS.map((c) => c.accent);
 const TOTAL = SERVICE_CLUSTERS.length;
 
 const LABEL_SCALE_START = 4;
+// Mobile/tablet skip the "fly to corner" pin entirely (there's no room for
+// it) and instead just shrink a little as the section scrolls into view.
+// This is the scale we'd like to start from; it's capped per-device (see
+// the mobile setup below) so it can never overflow the viewport width.
+const LABEL_SCALE_START_MOBILE = 2.1;
+const LABEL_SCALE_VIEWPORT_MARGIN = 24;
 const LABEL_SETTLE_FRACTION = 0.12;
+// On desktop this label should settle at the same final size as Projects.tsx's
+// "Selected Work" label — mirrors that label's text clamp(1.9rem, 4.4vw, 3.75rem)
+// so the end scale can be computed relative to this label's own (smaller) base size.
+const MATCHED_LABEL_MIN_REM = 1.9;
+const MATCHED_LABEL_PREF_VW = 4.4;
+const MATCHED_LABEL_MAX_REM = 3.75;
 const CORNER_INSET = 20;
 const CORNER_INSET_SM = 32;
 const CORNER_INSET_BREAKPOINT = 640;
+const MOBILE_QUERY = `(max-width: ${CORNER_INSET_BREAKPOINT - 1}px)`;
 
 export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -32,6 +45,7 @@ export default function Services() {
   const railFillRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const reducedMotion = useReducedMotion();
+  const isMobile = useMediaQuery(MOBILE_QUERY);
 
   const handleActive = useCallback((i: number) => setActiveIndex(i), []);
 
@@ -114,15 +128,75 @@ export default function Services() {
     const label = labelRef.current;
     if (!section || !wrap || !label) return;
 
+    // The desired mobile start scale, capped so it can never push the label
+    // wider than the viewport (device widths vary a lot more on phones).
+    function mobileScaleStart() {
+      const prevTransform = label!.style.transform;
+      label!.style.transform = "none";
+      const width = label!.getBoundingClientRect().width;
+      label!.style.transform = prevTransform;
+      const safeWidth = window.innerWidth - LABEL_SCALE_VIEWPORT_MARGIN * 2;
+      const maxScale = width > 0 ? safeWidth / width : LABEL_SCALE_START_MOBILE;
+      return Math.max(1, Math.min(LABEL_SCALE_START_MOBILE, maxScale));
+    }
+
     if (reducedMotion) {
-      label.style.transform = `scale(${LABEL_SCALE_START})`;
+      label.style.transform = `scale(${isMobile ? mobileScaleStart() : LABEL_SCALE_START})`;
       return;
     }
 
     let cancelled = false;
     let ctx: gsap.Context | undefined;
     let tick: (() => void) | undefined;
+
+    // Mobile/tablet: no room to fly the label into a corner, so just settle
+    // it from a slightly larger scale down to 1 as the section scrolls in.
+    if (isMobile) {
+      const setup = () => {
+        if (cancelled) return;
+        ctx = gsap.context(() => {
+          gsap.set(label, { scale: mobileScaleStart() });
+          gsap.to(label, {
+            scale: 1,
+            ease: "none",
+            scrollTrigger: {
+              trigger: wrap,
+              start: "top 85%",
+              end: "top 45%",
+              scrub: true,
+            },
+          });
+        }, sectionRef);
+      };
+
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(setup);
+      } else {
+        setup();
+      }
+
+      return () => {
+        cancelled = true;
+        ctx?.revert();
+      };
+    }
+
     const cornerOffset = { x: 0, y: 0 };
+    // Scale the settled label is eased toward instead of a flat 1, so the
+    // final rendered size matches Projects.tsx's label without touching this
+    // label's own (smaller) base font size — which would also inflate the
+    // zoomed-in starting size.
+    let endScale = 1;
+
+    function measureEndScale() {
+      const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const targetPx = Math.max(
+        MATCHED_LABEL_MIN_REM * rootFontPx,
+        Math.min((MATCHED_LABEL_PREF_VW / 100) * window.innerWidth, MATCHED_LABEL_MAX_REM * rootFontPx),
+      );
+      const basePx = parseFloat(getComputedStyle(label!).fontSize) || targetPx;
+      endScale = basePx > 0 ? targetPx / basePx : 1;
+    }
 
     function measureCornerOffset() {
       const prevTransform = label!.style.transform;
@@ -131,8 +205,10 @@ export default function Services() {
       label!.style.transform = prevTransform;
 
       const inset = window.innerWidth >= CORNER_INSET_BREAKPOINT ? CORNER_INSET_SM : CORNER_INSET;
-      const targetCenterX = inset + rect.width / 2;
-      const targetCenterY = inset + rect.height / 2;
+      // Use the label's true settled size (natural size * endScale), not its
+      // unscaled size, so the corner-docked edge lands at `inset` for real.
+      const targetCenterX = inset + (rect.width * endScale) / 2;
+      const targetCenterY = inset + (rect.height * endScale) / 2;
 
       cornerOffset.x = targetCenterX - window.innerWidth / 2;
       cornerOffset.y = targetCenterY - window.innerHeight / 2;
@@ -149,6 +225,7 @@ export default function Services() {
 
     function remeasure() {
       lockWrapHeight();
+      measureEndScale();
       measureCornerOffset();
     }
 
@@ -178,7 +255,7 @@ export default function Services() {
         tick = () => {
           const settle = gsap.utils.clamp(0, 1, progress / LABEL_SETTLE_FRACTION);
           const eased = settle * settle * (3 - 2 * settle);
-          const scale = gsap.utils.interpolate(LABEL_SCALE_START, 1, eased);
+          const scale = gsap.utils.interpolate(LABEL_SCALE_START, endScale, eased);
           const tx = gsap.utils.interpolate(0, cornerOffset.x, eased);
           const ty = gsap.utils.interpolate(0, cornerOffset.y, eased);
           label!.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
@@ -199,7 +276,7 @@ export default function Services() {
       window.removeEventListener("resize", remeasure);
       ctx?.revert();
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, isMobile]);
 
   useEffect(() => {
     registerGsap();

@@ -95,6 +95,8 @@ export default function Hero() {
 
   const titleDissolveRef = useRef<HTMLDivElement>(null);
   const titleCharsRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const scrollIndicatorRef = useRef<HTMLDivElement>(null);
+  const scrollIndicatorTextRef = useRef<HTMLDivElement>(null);
 
   const reducedMotion = useReducedMotion();
 
@@ -224,7 +226,12 @@ export default function Hero() {
       });
 
       tl.to(
-        [titleDissolveRef.current, bgDissolveRef.current],
+        [
+          titleDissolveRef.current,
+          bgDissolveRef.current,
+          scrollIndicatorRef.current,
+          scrollIndicatorTextRef.current,
+        ],
         reducedMotion
           ? { opacity: 0, ease: "none", duration: 0.4 }
           : {
@@ -335,6 +342,31 @@ export default function Hero() {
               </span>
             ))}
           </h1>
+        </div>
+
+        <div
+          ref={scrollIndicatorRef}
+          aria-hidden="true"
+          className="absolute bottom-0 right-0 z-10 h-56 w-20 rounded-tl-[2.5rem] bg-white mix-blend-difference sm:h-72 sm:w-24 sm:rounded-tl-[3rem] lg:h-96 lg:w-28 lg:rounded-tl-[4rem]"
+        />
+        <div
+          ref={scrollIndicatorTextRef}
+          aria-hidden="true"
+          className="absolute bottom-0 right-0 z-10 flex h-56 w-20 flex-col items-center py-4 sm:h-72 sm:w-24 sm:py-5 lg:h-96 lg:w-28 lg:py-6"
+        >
+          <span className="flex flex-col items-center font-display text-2xl font-black uppercase leading-none text-white [font-variation-settings:'wght'_900,'CNTR'_0] sm:text-3xl lg:text-4xl">
+            {"Scroll".split("").map((char, i) => (
+              <span
+                key={i}
+                className={`scale-x-125 ${i === 0 ? "" : "-mt-1 sm:-mt-1.5 lg:-mt-2"}`}
+              >
+                {char}
+              </span>
+            ))}
+          </span>
+          <span className="relative -mt-1 w-1 flex-1 overflow-hidden rounded-full bg-white/60 sm:-mt-1.5 sm:w-1.5 lg:-mt-2">
+            <span className="scroll-indicator-dot absolute inset-x-0 top-0 h-4 rounded-full bg-white sm:h-5" />
+          </span>
         </div>
 
         <div

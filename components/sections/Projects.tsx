@@ -4,11 +4,11 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef } from "react";
 import { gsap, registerGsap } from "@/lib/gsap";
 import { galleryState } from "@/lib/galleryState";
-import { useReducedMotion } from "@/lib/useMediaQuery";
+import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import WaveLabel from "@/components/ui/WaveLabel";
 import { PROJECTS } from "@/components/projects/projectsData";
-import { ENTRY_FADE_FRACTION } from "@/lib/galleryLayout";
+import { ENTRY_FADE_FRACTION, GALLERY_SCROLL_TRIGGER_ID } from "@/lib/galleryLayout";
 
 const GalleryScene = dynamic(() => import("@/components/three/GalleryScene"), {
   ssr: false,
@@ -27,6 +27,13 @@ const RAIL_FILL_TO = "rgba(245,243,238,0.85)";
 
 const TITLE_SCALE_START = 3.2;
 const TITLE_SETTLE_FRACTION = 0.12;
+// Minimum breathing room kept on each side of the viewport so the huge
+// starting scale never crops the label off-screen on narrow devices.
+const TITLE_VIEWPORT_MARGIN = 20;
+const MOBILE_QUERY = "(max-width: 639px)";
+// On mobile the label settles centered under the navbar instead of its
+// desktop corner spot; this is the gap kept between the two.
+const MOBILE_LABEL_TOP_GAP = 18;
 
 export default function Projects() {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -36,11 +43,19 @@ export default function Projects() {
   const labelRef = useRef<HTMLHeadingElement>(null);
   const indexLabelRef = useRef<HTMLSpanElement>(null);
   const reducedMotion = useReducedMotion();
+  const isMobile = useMediaQuery(MOBILE_QUERY);
 
   const centerOffset = useRef({ x: 0, y: 0 });
+  const settleOffset = useRef({ x: 0, y: 0 });
+  const scaleStart = useRef(TITLE_SCALE_START);
+  // Label's own layout metrics, relative to the pin container — stable
+  // regardless of scroll/pin state, only needs recomputing on resize.
+  const labelMetrics = useRef({ centerXInPin: 0, centerYInPin: 0, height: 0 });
+  const navElRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     registerGsap();
+    navElRef.current = document.querySelector("nav");
 
     function measureLabelCenterOffset() {
       const label = labelRef.current;
@@ -53,10 +68,28 @@ export default function Projects() {
       label.style.transform = prevTransform;
       const labelCenterXInPin = labelRect.left - pinRect.left + labelRect.width / 2;
       const labelCenterYInPin = labelRect.top - pinRect.top + labelRect.height / 2;
+      labelMetrics.current = {
+        centerXInPin: labelCenterXInPin,
+        centerYInPin: labelCenterYInPin,
+        height: labelRect.height,
+      };
       centerOffset.current = {
         x: window.innerWidth / 2 - labelCenterXInPin,
         y: window.innerHeight / 2 - labelCenterYInPin,
       };
+
+      // Cap the zoomed-in start scale so the label always fits inside the
+      // viewport width on narrow screens instead of cropping off-screen.
+      const safeWidth = window.innerWidth - TITLE_VIEWPORT_MARGIN * 2;
+      const maxScale = labelRect.width > 0 ? safeWidth / labelRect.width : TITLE_SCALE_START;
+      scaleStart.current = Math.max(1, Math.min(TITLE_SCALE_START, maxScale));
+
+      // Desktop settles into its natural (corner) flow position, i.e. no
+      // offset. Mobile's target (centered under the navbar) depends on the
+      // navbar's live position/height, which changes as it scrolls into
+      // its "pill" state — that part is recomputed every frame in onTick.
+      settleOffset.current.x = isMobile ? window.innerWidth / 2 - labelCenterXInPin : 0;
+      if (!isMobile) settleOffset.current.y = 0;
     }
     measureLabelCenterOffset();
     window.addEventListener("resize", measureLabelCenterOffset);
@@ -64,6 +97,7 @@ export default function Projects() {
     const ctx = gsap.context(() => {
       gsap.timeline({
         scrollTrigger: {
+          id: GALLERY_SCROLL_TRIGGER_ID,
           trigger: wrapperRef.current,
           start: "top top",
           end: "+=500%",
@@ -95,12 +129,18 @@ export default function Projects() {
       if (railTrackRef.current) railTrackRef.current.style.backgroundColor = gsap.utils.interpolate(RAIL_TRACK_FROM, RAIL_TRACK_TO, fade);
       if (railFillRef.current) railFillRef.current.style.backgroundColor = gsap.utils.interpolate(RAIL_FILL_FROM, RAIL_FILL_TO, fade);
 
+      if (isMobile && navElRef.current) {
+        const navBottom = navElRef.current.getBoundingClientRect().bottom;
+        const targetCenterY = navBottom + MOBILE_LABEL_TOP_GAP + labelMetrics.current.height / 2;
+        settleOffset.current.y = targetCenterY - labelMetrics.current.centerYInPin;
+      }
+
       if (labelRef.current) {
         const settleRaw = gsap.utils.clamp(0, 1, p / TITLE_SETTLE_FRACTION);
         const settle = reducedMotion ? 1 : settleRaw * settleRaw * (3 - 2 * settleRaw);
-        const scale = gsap.utils.interpolate(TITLE_SCALE_START, 1, settle);
-        const tx = gsap.utils.interpolate(centerOffset.current.x, 0, settle);
-        const ty = gsap.utils.interpolate(centerOffset.current.y, 0, settle);
+        const scale = gsap.utils.interpolate(scaleStart.current, 1, settle);
+        const tx = gsap.utils.interpolate(centerOffset.current.x, settleOffset.current.x, settle);
+        const ty = gsap.utils.interpolate(centerOffset.current.y, settleOffset.current.y, settle);
         labelRef.current.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
       }
     };
@@ -114,7 +154,7 @@ export default function Projects() {
       galleryState.velocity = 0;
       galleryState.hoveredIndex = -1;
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, isMobile]);
 
   return (
     <section id="work" ref={wrapperRef} className="relative h-[600vh]">

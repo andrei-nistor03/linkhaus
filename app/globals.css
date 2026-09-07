@@ -82,6 +82,27 @@ html.has-custom-cursor button {
   color: #f5f3ee;
 }
 
+@keyframes scroll-indicator-drop {
+  0% {
+    top: -15%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+.scroll-indicator-dot {
+  animation: scroll-indicator-drop 1.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 @supports ((background-clip: text) or (-webkit-background-clip: text)) {
   .services-lava-text {
     background-image: radial-gradient(closest-side, #8a5cff, transparent 70%),
