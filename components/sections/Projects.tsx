@@ -216,15 +216,20 @@ export default function Projects() {
           </span>
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-5 pb-7 sm:px-8">
-          <div ref={railTrackRef} className="relative h-px w-full" style={{ backgroundColor: RAIL_TRACK_FROM }}>
-            <div
-              ref={railFillRef}
-              className="absolute inset-y-0 left-0 h-px w-full origin-left"
-              style={{ transform: "scaleX(0)", backgroundColor: RAIL_FILL_FROM }}
-            />
+        {/* The horizontal progress rail only matches the desktop rail layout;
+            under the dark vertical stack it just reads as a stray white line,
+            so mobile relies on the index counter alone. */}
+        {!isMobile && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-5 pb-7 sm:px-8">
+            <div ref={railTrackRef} className="relative h-px w-full" style={{ backgroundColor: RAIL_TRACK_FROM }}>
+              <div
+                ref={railFillRef}
+                className="absolute inset-y-0 left-0 h-px w-full origin-left"
+                style={{ transform: "scaleX(0)", backgroundColor: RAIL_FILL_FROM }}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

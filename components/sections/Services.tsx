@@ -324,7 +324,7 @@ export default function Services() {
     <section
       id="services"
       ref={sectionRef}
-      className="relative overflow-hidden bg-ink pb-[36vh] pt-[26vh] sm:pb-[42vh] sm:pt-[32vh]"
+      className="relative overflow-hidden bg-ink pb-[36vh] pt-[8vh] sm:pb-[42vh] sm:pt-[32vh]"
     >
       <ServicesBackdrop activeIndex={activeIndex} accents={ACCENTS} />
 
