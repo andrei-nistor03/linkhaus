@@ -3,7 +3,7 @@
 export const galleryState = {
   progress: 0,
   velocity: 0,
-  focusX: 0,
+  focus: 0,
   hoveredIndex: -1,
 };
 

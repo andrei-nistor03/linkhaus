@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import GalleryCameraRig from "./GalleryCameraRig";
@@ -10,12 +10,20 @@ import GalleryEnvironment from "./GalleryEnvironment";
 import ProjectPanel from "./ProjectPanel";
 import PanelGlow from "./PanelGlow";
 import { PROJECTS } from "@/components/projects/projectsData";
-import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
+import { useIsTouch, useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
+import { galleryMetrics, VERTICAL_QUERY } from "@/lib/galleryLayout";
 
 export default function GalleryScene() {
   const isTouch = useIsTouch();
   const reduced = useReducedMotion();
+  const vertical = useMediaQuery(VERTICAL_QUERY);
   const heavy = !isTouch && !reduced;
+  const metrics = useMemo(() => galleryMetrics(vertical), [vertical]);
+
+  // The dust field rides along with the horizontal rail, but in the vertical
+  // stack the track scrolls on the same axis the flakes rise on — so it's
+  // parented outside the track and stays camera-locked instead.
+  const environment = <GalleryEnvironment reducedMotion={reduced} vertical={vertical} />;
 
   return (
     <Canvas
@@ -44,18 +52,25 @@ export default function GalleryScene() {
       <pointLight position={[0, 1.6, 2]} color="#8a5cff" intensity={0.25} distance={10} decay={2} />
 
       <Suspense fallback={null}>
-        <GalleryTrack>
-          <GalleryEnvironment reducedMotion={reduced} />
+        {vertical && environment}
+        <GalleryTrack metrics={metrics}>
+          {!vertical && environment}
           {PROJECTS.map((project, i) => (
-            <PanelGlow key={`glow-${project.title}`} index={i} phase={i * 1.9} />
+            <PanelGlow key={`glow-${project.title}`} index={i} phase={i * 1.9} metrics={metrics} />
           ))}
           {PROJECTS.map((project, i) => (
-            <ProjectPanel key={project.title} project={project} index={i} reducedMotion={reduced} />
+            <ProjectPanel
+              key={project.title}
+              project={project}
+              index={i}
+              reducedMotion={reduced}
+              metrics={metrics}
+            />
           ))}
         </GalleryTrack>
       </Suspense>
 
-      <GalleryCameraRig reducedMotion={reduced} />
+      <GalleryCameraRig reducedMotion={reduced} vertical={vertical} />
     </Canvas>
   );
 }

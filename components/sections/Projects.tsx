@@ -8,7 +8,12 @@ import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import WaveLabel from "@/components/ui/WaveLabel";
 import { PROJECTS } from "@/components/projects/projectsData";
-import { ENTRY_FADE_FRACTION, GALLERY_SCROLL_TRIGGER_ID } from "@/lib/galleryLayout";
+import {
+  ENTRY_FADE_FRACTION,
+  GALLERY_SCROLL_TRIGGER_ID,
+  VERTICAL_QUERY,
+  galleryMetrics,
+} from "@/lib/galleryLayout";
 
 const GalleryScene = dynamic(() => import("@/components/three/GalleryScene"), {
   ssr: false,
@@ -30,7 +35,20 @@ const TITLE_SETTLE_FRACTION = 0.12;
 // Minimum breathing room kept on each side of the viewport so the huge
 // starting scale never crops the label off-screen on narrow devices.
 const TITLE_VIEWPORT_MARGIN = 20;
-const MOBILE_QUERY = "(max-width: 639px)";
+// Same breakpoint the scene uses to switch the gallery from a horizontal
+// rail to a vertical stack, so the label and the layout flip together.
+const MOBILE_QUERY = VERTICAL_QUERY;
+
+// Scroll distance the pinned section consumes, as a percentage of the
+// viewport height. The vertical stack has a shorter track (panels are
+// spaced on their short edge), so it gets proportionally less scroll to
+// keep the travel-per-pixel feel the same in both modes.
+const SCROLL_DISTANCE = 500;
+const MOBILE_SCROLL_DISTANCE = Math.round(
+  (SCROLL_DISTANCE * galleryMetrics(true).trackLength) /
+    galleryMetrics(false).trackLength /
+    10,
+) * 10;
 // On mobile the label settles centered under the navbar instead of its
 // desktop corner spot; this is the gap kept between the two.
 const MOBILE_LABEL_TOP_GAP = 18;
@@ -42,8 +60,10 @@ export default function Projects() {
   const railFillRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLHeadingElement>(null);
   const indexLabelRef = useRef<HTMLSpanElement>(null);
+  const topScrimRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
   const isMobile = useMediaQuery(MOBILE_QUERY);
+  const scrollDistance = isMobile ? MOBILE_SCROLL_DISTANCE : SCROLL_DISTANCE;
 
   const centerOffset = useRef({ x: 0, y: 0 });
   const settleOffset = useRef({ x: 0, y: 0 });
@@ -100,7 +120,7 @@ export default function Projects() {
           id: GALLERY_SCROLL_TRIGGER_ID,
           trigger: wrapperRef.current,
           start: "top top",
-          end: "+=500%",
+          end: `+=${scrollDistance}%`,
           scrub: 1.3,
           pin: pinRef.current,
           pinSpacing: true,
@@ -128,6 +148,9 @@ export default function Projects() {
       if (indexLabelRef.current) indexLabelRef.current.style.color = gsap.utils.interpolate(LABEL_COLOR_FROM, LABEL_COLOR_TO, fade);
       if (railTrackRef.current) railTrackRef.current.style.backgroundColor = gsap.utils.interpolate(RAIL_TRACK_FROM, RAIL_TRACK_TO, fade);
       if (railFillRef.current) railFillRef.current.style.backgroundColor = gsap.utils.interpolate(RAIL_FILL_FROM, RAIL_FILL_TO, fade);
+      // The vertical stack scrolls panels up through the header, so the scrim
+      // fades in with the dark scene to keep the label readable over them.
+      if (topScrimRef.current) topScrimRef.current.style.opacity = String(fade);
 
       if (isMobile && navElRef.current) {
         const navBottom = navElRef.current.getBoundingClientRect().bottom;
@@ -154,14 +177,27 @@ export default function Projects() {
       galleryState.velocity = 0;
       galleryState.hoveredIndex = -1;
     };
-  }, [reducedMotion, isMobile]);
+  }, [reducedMotion, isMobile, scrollDistance]);
 
   return (
-    <section id="work" ref={wrapperRef} className="relative h-[600vh]">
+    <section
+      id="work"
+      ref={wrapperRef}
+      className="relative"
+      style={{ height: `${scrollDistance + 100}vh` }}
+    >
       <div ref={pinRef} className="sticky top-0 h-screen w-full overflow-hidden bg-paper">
         <SceneErrorBoundary fallback={<div className="absolute inset-0 bg-paper" />}>
           <GalleryScene />
         </SceneErrorBoundary>
+
+        {isMobile && (
+          <div
+            ref={topScrimRef}
+            className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-44 bg-gradient-to-b from-[#0d0d0d] via-[#0d0d0d]/70 to-transparent"
+            style={{ opacity: 0 }}
+          />
+        )}
 
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between p-5 sm:p-8">
           <h2

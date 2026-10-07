@@ -304,7 +304,11 @@ export default function Hero() {
     <section id="top" ref={wrapperRef} className="relative h-[240vh]">
       <div
         ref={pinRef}
-        className="sticky top-0 h-screen w-full overflow-hidden bg-paper"
+        // svh, not vh: on mobile `100vh` is the viewport with the browser
+        // chrome hidden, so a vh-sized hero puts its lower words and the
+        // scroll cue below the fold until you scroll. svh is the always-
+        // visible height, so the whole hero fits on screen from the start.
+        className="sticky top-0 h-svh w-full overflow-hidden bg-paper"
       >
         <div ref={bgDissolveRef} className="absolute inset-0">
           <HalftoneBackground />

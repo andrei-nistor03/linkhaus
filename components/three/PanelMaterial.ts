@@ -13,6 +13,7 @@ const fragmentShader =  `
   uniform float uHover;
   uniform float uFocus;
   uniform float uSeed;
+  uniform float uFade;
   uniform vec3 uColorPaper;
   uniform vec3 uColorAccent;
   varying vec2 vUv;
@@ -55,7 +56,7 @@ const fragmentShader =  `
     col = mix(uColorPaper, col, 0.32 + uFocus * 0.68);
     float alpha = mix(0.55, 1.0, uFocus * 0.75 + uHover * 0.25);
 
-    gl_FragColor = vec4(col, alpha);
+    gl_FragColor = vec4(col, alpha * uFade);
   }
 `;
 
@@ -65,6 +66,10 @@ export interface PanelMaterialUniforms {
   uHover: { value: number };
   uFocus: { value: number };
   uSeed: { value: number };
+  // Extra distance falloff, used by the mobile vertical stack so panels
+  // above and below the centered one recede instead of all reading equally.
+  // Stays at 1 for the horizontal rail.
+  uFade: { value: number };
   uColorPaper: { value: THREE.Color };
   uColorAccent: { value: THREE.Color };
 }
@@ -75,6 +80,7 @@ export function createPanelMaterial(accentHex: string, seed: number) {
     uHover: { value: 0 },
     uFocus: { value: 1 },
     uSeed: { value: seed },
+    uFade: { value: 1 },
     uColorPaper: { value: new THREE.Color("#f5f3ee") },
     uColorAccent: { value: new THREE.Color(accentHex) },
   };

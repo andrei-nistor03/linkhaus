@@ -5,7 +5,7 @@ import { Billboard } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { galleryState } from "@/lib/galleryState";
-import { panelLayout, FOCUS_WINDOW } from "@/lib/galleryLayout";
+import { panelLayout, type GalleryMetrics } from "@/lib/galleryLayout";
 
 
 function makeBackdropTexture() {
@@ -83,8 +83,20 @@ function getRaysTexture() {
   return sharedRaysTexture;
 }
 
-export default function PanelGlow({ index, phase = 0 }: { index: number; phase?: number }) {
-  const layoutX = useMemo(() => panelLayout(index).position.x, [index]);
+export default function PanelGlow({
+  index,
+  phase = 0,
+  metrics,
+}: {
+  index: number;
+  phase?: number;
+  metrics: GalleryMetrics;
+}) {
+  const layout = useMemo(() => panelLayout(index, metrics), [index, metrics]);
+  // Stacked vertically the panels sit much closer together, so the halos
+  // are pulled in to keep them reading as one glow per panel instead of a
+  // single additive smear down the column.
+  const haloScale = metrics.vertical ? 0.64 : 1;
   const groupRef = useRef<THREE.Group>(null);
   const material = useRef<THREE.MeshBasicMaterial>(null);
   const mesh = useRef<THREE.Mesh>(null);
@@ -99,8 +111,8 @@ export default function PanelGlow({ index, phase = 0 }: { index: number; phase?:
     t.current += delta;
     const breathe = 0.5 + Math.sin(t.current * 1.4 + phase) * 0.3;
 
-    const dist = Math.abs(layoutX - galleryState.focusX);
-    const focus = THREE.MathUtils.clamp(1 - dist / FOCUS_WINDOW, 0, 1);
+    const dist = Math.abs(layout.trackCoord - galleryState.focus);
+    const focus = THREE.MathUtils.clamp(1 - dist / metrics.focusWindow, 0, 1);
     const focusSmooth = focus * focus * (3 - 2 * focus);
     const hoverTarget = galleryState.hoveredIndex === index ? 1 : 0;
     hoverEase.current += (hoverTarget - hoverEase.current) * Math.min(1, delta * 6);
@@ -129,10 +141,10 @@ export default function PanelGlow({ index, phase = 0 }: { index: number; phase?:
   });
 
   return (
-    <group ref={groupRef} position={[layoutX, 0, 0]}>
+    <group ref={groupRef} position={[layout.position.x, layout.position.y, layout.position.z]}>
       <Billboard position={[0, 0, -0.55]}>
         <mesh ref={rays}>
-          <planeGeometry args={[5.2, 5.2]} />
+          <planeGeometry args={[5.2 * haloScale, 5.2 * haloScale]} />
           <meshBasicMaterial
             ref={raysMaterial}
             map={getRaysTexture()}
@@ -147,7 +159,7 @@ export default function PanelGlow({ index, phase = 0 }: { index: number; phase?:
       </Billboard>
       <Billboard position={[0, 0, -0.42]}>
         <mesh ref={mesh}>
-          <planeGeometry args={[3.6, 3.6]} />
+          <planeGeometry args={[3.6 * haloScale, 3.6 * haloScale]} />
           <meshBasicMaterial
             ref={material}
             map={getBackdropTexture()}

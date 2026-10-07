@@ -7,8 +7,6 @@ import * as THREE from "three";
 import { galleryState } from "@/lib/galleryState";
 import { setCursorOverride } from "@/lib/cursorState";
 import { useIsTouch } from "@/lib/useMediaQuery";
-import { lenisState } from "@/lib/lenisState";
-import { ScrollTrigger } from "@/lib/gsap";
 import { createPanelMaterial } from "./PanelMaterial";
 import {
   panelLayout,
@@ -16,9 +14,7 @@ import {
   PANEL_HEIGHT,
   PANEL_DEPTH,
   PANEL_COUNT,
-  FOCUS_WINDOW,
-  progressForIndex,
-  GALLERY_SCROLL_TRIGGER_ID,
+  type GalleryMetrics,
 } from "@/lib/galleryLayout";
 import type { Project } from "@/components/projects/projectsData";
 
@@ -26,17 +22,14 @@ interface ProjectPanelProps {
   project: Project;
   index: number;
   reducedMotion: boolean;
+  metrics: GalleryMetrics;
 }
 
 const MAX_TILT = 0.16;
-// A touch that moves or lingers past these limits is a scroll/drag, not a
-// tap — used to tell the two apart on mobile/tablet.
-const TAP_MAX_MOVE_PX = 10;
-const TAP_MAX_DURATION_MS = 500;
 
-export default function ProjectPanel({ project, index, reducedMotion }: ProjectPanelProps) {
+export default function ProjectPanel({ project, index, reducedMotion, metrics }: ProjectPanelProps) {
   const isTouch = useIsTouch();
-  const layout = useMemo(() => panelLayout(index), [index]);
+  const layout = useMemo(() => panelLayout(index, metrics), [index, metrics]);
   const material = useMemo(
     () => createPanelMaterial(project.accent, index * 1.37 + 0.4),
     [project.accent, index],
@@ -53,34 +46,18 @@ export default function ProjectPanel({ project, index, reducedMotion }: ProjectP
   const tilt = useRef({ x: 0, y: 0 });
   const tiltTarget = useRef({ x: 0, y: 0 });
   const [emphasized, setEmphasized] = useState(false);
-  const wasTouchActive = useRef(false);
-  const pointerDownInfo = useRef<{ x: number; y: number; time: number } | null>(null);
 
   useFrame((state, rawDelta) => {
     const inner = innerRef.current;
     if (!inner) return;
     const delta = Math.min(rawDelta, 1 / 30);
 
-    const dist = Math.abs(layout.position.x - galleryState.focusX);
-    const focus = THREE.MathUtils.clamp(1 - dist / FOCUS_WINDOW, 0, 1);
+    const dist = Math.abs(layout.trackCoord - galleryState.focus);
+    const focus = THREE.MathUtils.clamp(1 - dist / metrics.focusWindow, 0, 1);
     const focusSmooth = focus * focus * (3 - 2 * focus);
 
     if (outerRef.current) {
       outerRef.current.rotation.y = layout.rotationY * (1 - focusSmooth);
-    }
-
-    // Touch/tablet: a tap starts the effect (see onPointerUp below), and
-    // scrolling the panel out of focus is what stops it again.
-    if (isTouch) {
-      const isActive = galleryState.hoveredIndex === index;
-      if (isActive && focus <= 0) {
-        galleryState.hoveredIndex = -1;
-      }
-      const stillActive = galleryState.hoveredIndex === index;
-      if (stillActive !== wasTouchActive.current) {
-        wasTouchActive.current = stillActive;
-        setEmphasized(stillActive);
-      }
     }
 
     const hoverTarget = !reducedMotion && galleryState.hoveredIndex === index ? 1 : 0;
@@ -103,7 +80,17 @@ export default function ProjectPanel({ project, index, reducedMotion }: ProjectP
       Math.min(1, delta * 4),
     );
 
-    const captionOpacity = 0.3 + focusSmooth * 0.6 + hover.current * 0.1;
+    // In the vertical stack the neighbours sit directly above and below the
+    // centered panel, so they get a distance falloff to read as background
+    // instead of competing with it. The horizontal rail keeps them solid.
+    let fade = 1;
+    if (metrics.vertical) {
+      const reach = THREE.MathUtils.clamp(1 - dist / (metrics.spacing * 1.6), 0, 1);
+      fade = 0.16 + reach * reach * (3 - 2 * reach) * 0.84;
+    }
+    material.uniforms.uFade.value = fade;
+
+    const captionOpacity = (0.3 + focusSmooth * 0.6 + hover.current * 0.1) * fade;
     const lift = (1 - focusSmooth) * 6;
     if (captionTopRef.current) {
       captionTopRef.current.style.opacity = String(captionOpacity);
@@ -115,6 +102,9 @@ export default function ProjectPanel({ project, index, reducedMotion }: ProjectP
     }
   });
 
+  // Hover response (tilt, lift, scale) is desktop-only. On touch devices the
+  // panels keep a fixed position — nothing about a tap or a drag should move
+  // them; only scrolling does.
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     if (reducedMotion) return;
     const inner = innerRef.current;
@@ -125,52 +115,17 @@ export default function ProjectPanel({ project, index, reducedMotion }: ProjectP
       y: THREE.MathUtils.clamp(local.x / (PANEL_WIDTH / 2), -1, 1) * MAX_TILT,
     };
   };
-  // Desktop uses real hover. Touch/tablet has no hover state: tapping a
-  // panel instead scrolls it to center and starts the effect, which then
-  // runs until the panel is scrolled out of focus (see useFrame above).
   const onPointerOver = (e: ThreeEvent<PointerEvent>) => {
-    if (isTouch) return;
     e.stopPropagation();
     galleryState.hoveredIndex = index;
     setCursorOverride("project");
     setEmphasized(true);
   };
   const onPointerOut = () => {
-    if (isTouch) return;
     if (galleryState.hoveredIndex === index) galleryState.hoveredIndex = -1;
     tiltTarget.current = { x: 0, y: 0 };
     setCursorOverride(null);
     setEmphasized(false);
-  };
-  const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
-    if (!isTouch) return;
-    pointerDownInfo.current = { x: e.clientX, y: e.clientY, time: performance.now() };
-  };
-  const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
-    if (!isTouch) return;
-    const start = pointerDownInfo.current;
-    pointerDownInfo.current = null;
-    if (!start) return;
-
-    const moved = Math.hypot(e.clientX - start.x, e.clientY - start.y);
-    const elapsed = performance.now() - start.time;
-    if (moved > TAP_MAX_MOVE_PX || elapsed > TAP_MAX_DURATION_MS) return; // was a scroll/drag, not a tap
-    e.stopPropagation();
-
-    const trigger = ScrollTrigger.getById(GALLERY_SCROLL_TRIGGER_ID);
-    if (trigger) {
-      const targetScroll = trigger.start + progressForIndex(index) * (trigger.end - trigger.start);
-      const lenis = lenisState.instance;
-      if (lenis) {
-        lenis.scrollTo(targetScroll, { immediate: reducedMotion });
-      } else {
-        window.scrollTo({ top: targetScroll, behavior: reducedMotion ? "auto" : "smooth" });
-      }
-    }
-    galleryState.hoveredIndex = index;
-  };
-  const onPointerCancel = () => {
-    pointerDownInfo.current = null;
   };
 
   return (
@@ -181,12 +136,9 @@ export default function ProjectPanel({ project, index, reducedMotion }: ProjectP
           args={[PANEL_WIDTH, PANEL_HEIGHT, PANEL_DEPTH]}
           radius={0.045}
           smoothness={4}
-          onPointerMove={onPointerMove}
-          onPointerOver={onPointerOver}
-          onPointerOut={onPointerOut}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerCancel}
+          onPointerMove={isTouch ? undefined : onPointerMove}
+          onPointerOver={isTouch ? undefined : onPointerOver}
+          onPointerOut={isTouch ? undefined : onPointerOut}
         >
           <primitive object={material} attach="material" />
         </RoundedBox>

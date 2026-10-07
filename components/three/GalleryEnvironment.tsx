@@ -4,24 +4,56 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Grid, Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { PANEL_COUNT, TOTAL_SPAN, panelLayout } from "@/lib/galleryLayout";
+import { PANEL_COUNT, TOTAL_SPAN, HORIZONTAL_METRICS, panelLayout } from "@/lib/galleryLayout";
 import { galleryState } from "@/lib/galleryState";
 import { scrollState } from "@/lib/scrollState";
 import { GRID_LINE_COLOR, GRID_MAJOR_COLOR } from "@/lib/gridTheme";
 
-const DUST_COUNT = 160;
-const MOTE_COUNT = 70;
 const FLOOR_Y = -1.15;
 
 const FIELD_PAD = 10;
-const X_MIN = -FIELD_PAD;
-const X_MAX = TOTAL_SPAN + FIELD_PAD;
-const X_SPAN = X_MAX - X_MIN;
-const Y_MIN = -1;
-const Y_MAX = 2;
-const Y_SPAN = Y_MAX - Y_MIN;
 const Z_MIN = -3.6;
 const Z_MAX = -0.6;
+
+interface FieldBounds {
+  xMin: number;
+  xMax: number;
+  xSpan: number;
+  yMin: number;
+  yMax: number;
+  ySpan: number;
+  dustCount: number;
+  moteCount: number;
+}
+
+function makeBounds(
+  xMin: number,
+  xMax: number,
+  yMin: number,
+  yMax: number,
+  dustCount: number,
+  moteCount: number,
+): FieldBounds {
+  return {
+    xMin,
+    xMax,
+    xSpan: xMax - xMin,
+    yMin,
+    yMax,
+    ySpan: yMax - yMin,
+    dustCount,
+    moteCount,
+  };
+}
+
+// Horizontal mode: the field is parented to the track and stretches along the
+// whole rail, so only a slice of it is ever on screen. Vertical mode: the
+// panels scroll past on the Y axis instead, so the field stays put around the
+// camera and covers little more than the frame. The counts are set to put a
+// comparable number of flakes in frame in both modes — the vertical field is
+// almost entirely visible at once, so it needs far fewer.
+const HORIZONTAL_BOUNDS = makeBounds(-FIELD_PAD, TOTAL_SPAN + FIELD_PAD, -1, 2, 160, 70);
+const VERTICAL_BOUNDS = makeBounds(-2.6, 2.6, -4.2, 4.2, 42, 18);
 
 const REPEL_RADIUS = 2;
 const REPEL_STRENGTH = 1.1;
@@ -88,6 +120,7 @@ type DebrisState = {
 
 function makeFlakeStates(
   count: number,
+  bounds: FieldBounds,
   scaleRange: [number, number],
   flattenRange: [number, number],
   riseRange: [number, number],
@@ -95,8 +128,8 @@ function makeFlakeStates(
   rotDriftRange: number,
 ): FlakeState[] {
   return Array.from({ length: count }, () => ({
-    x: X_MIN + Math.random() * X_SPAN,
-    y: Y_MIN + Math.random() * Y_SPAN,
+    x: bounds.xMin + Math.random() * bounds.xSpan,
+    y: bounds.yMin + Math.random() * bounds.ySpan,
     z: Z_MIN + Math.random() * (Z_MAX - Z_MIN),
     rotX: Math.random() * Math.PI * 2,
     rotY: Math.random() * Math.PI * 2,
@@ -140,9 +173,16 @@ function makeDebrisPool(count: number): DebrisState[] {
 
 export default function GalleryEnvironment({
   reducedMotion = false,
+  vertical = false,
 }: {
   reducedMotion?: boolean;
+  vertical?: boolean;
 }) {
+  const bounds = vertical ? VERTICAL_BOUNDS : HORIZONTAL_BOUNDS;
+  // The flakes part around the pointer on the horizontal rail. The vertical
+  // stack is the mobile layout, where the only pointer is a finger, so they
+  // ignore it rather than lurching away from every tap.
+  const repelsPointer = !reducedMotion && !vertical;
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const flashColor = useMemo(() => new THREE.Color(), []);
 
@@ -154,26 +194,28 @@ export default function GalleryEnvironment({
   const dustStates = useMemo(
     () =>
       makeFlakeStates(
-        DUST_COUNT,
+        bounds.dustCount,
+        bounds,
         [0.018, 0.045],
         [0.6, 1],
         [0.09, 0.2],
         0.08,
         0.6,
       ),
-    [],
+    [bounds],
   );
   const moteStates = useMemo(
     () =>
       makeFlakeStates(
-        MOTE_COUNT,
+        bounds.moteCount,
+        bounds,
         [0.035, 0.07],
         [0.5, 0.9],
         [0.07, 0.16],
         0.07,
         0.55,
       ),
-    [],
+    [bounds],
   );
 
   const debris = useMemo(() => makeDebrisPool(DEBRIS_POOL), []);
@@ -293,8 +335,8 @@ export default function GalleryEnvironment({
             s.burnT += delta;
             if (s.burnT >= BURN_DURATION) {
               s.burning = false;
-              s.x = X_MIN + Math.random() * X_SPAN;
-              s.y = Y_MIN + Math.random() * Y_SPAN;
+              s.x = bounds.xMin + Math.random() * bounds.xSpan;
+              s.y = bounds.yMin + Math.random() * bounds.ySpan;
               s.z = Z_MIN + Math.random() * (Z_MAX - Z_MIN);
             }
           } else {
@@ -303,12 +345,12 @@ export default function GalleryEnvironment({
             s.rotX += s.rotDriftX * delta;
             s.rotY += s.rotDriftY * delta;
 
-            if (s.y > Y_MAX) {
-              s.y = Y_MIN;
-              s.x = X_MIN + Math.random() * X_SPAN;
+            if (s.y > bounds.yMax) {
+              s.y = bounds.yMin;
+              s.x = bounds.xMin + Math.random() * bounds.xSpan;
             }
-            if (s.x > X_MAX) s.x -= X_SPAN;
-            else if (s.x < X_MIN) s.x += X_SPAN;
+            if (s.x > bounds.xMax) s.x -= bounds.xSpan;
+            else if (s.x < bounds.xMin) s.x += bounds.xSpan;
 
             if (Math.random() < COMBUST_RATE * delta) {
               s.burning = true;
@@ -320,7 +362,7 @@ export default function GalleryEnvironment({
 
         let pushX = 0;
         let pushY = 0;
-        if (!reducedMotion) {
+        if (repelsPointer) {
           const dx = s.x - pushOriginX;
           const dy = s.y - pushOriginY;
           const distSq = dx * dx + dy * dy;
@@ -360,14 +402,14 @@ export default function GalleryEnvironment({
       }
       mesh.instanceMatrix.needsUpdate = true;
     },
-    [dummy, reducedMotion, spawnCombustion],
+    [bounds, dummy, reducedMotion, repelsPointer, spawnCombustion],
   );
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 1 / 30);
     const pointer = scrollState.pointerEased;
-    const pushOriginX = galleryState.focusX + pointer.x * (X_SPAN * 0.12);
-    const pushOriginY = -pointer.y * (Y_SPAN * 0.5);
+    const pushOriginX = galleryState.focus + pointer.x * (bounds.xSpan * 0.12);
+    const pushOriginY = -pointer.y * (bounds.ySpan * 0.5);
 
     updateField(dustRef.current, dustStates, delta, pushOriginX, pushOriginY);
     updateField(moteRef.current, moteStates, delta, pushOriginX, pushOriginY);
@@ -428,38 +470,37 @@ export default function GalleryEnvironment({
     }
   });
 
-  const studs = useMemo(
-    () =>
-      Array.from({ length: PANEL_COUNT }, (_, i) => {
-        const { position } = panelLayout(i);
-        return [
-          [position.x, FLOOR_Y, position.z] as [number, number, number],
-          [position.x, position.y - 0.15, position.z] as [
-            number,
-            number,
-            number,
-          ],
-        ];
-      }),
-    [],
-  );
+  // The floor grid and the stems dropping from each panel only make sense for
+  // the horizontal rail — the vertical stack has no ground plane.
+  const studs = useMemo(() => {
+    if (vertical) return [] as [number, number, number][][];
+    return Array.from({ length: PANEL_COUNT }, (_, i) => {
+      const { position } = panelLayout(i, HORIZONTAL_METRICS);
+      return [
+        [position.x, FLOOR_Y, position.z] as [number, number, number],
+        [position.x, position.y - 0.15, position.z] as [number, number, number],
+      ];
+    });
+  }, [vertical]);
 
   return (
     <>
-      <Grid
-        position={[TOTAL_SPAN / 2, FLOOR_Y, 0]}
-        args={[TOTAL_SPAN + 20, 12]}
-        cellSize={0.55}
-        cellThickness={0.5}
-        cellColor={GRID_LINE_COLOR}
-        sectionSize={2.2}
-        sectionThickness={0.9}
-        sectionColor={GRID_MAJOR_COLOR}
-        fadeDistance={16}
-        fadeStrength={1.4}
-        followCamera={false}
-        infiniteGrid={false}
-      />
+      {!vertical && (
+        <Grid
+          position={[TOTAL_SPAN / 2, FLOOR_Y, 0]}
+          args={[TOTAL_SPAN + 20, 12]}
+          cellSize={0.55}
+          cellThickness={0.5}
+          cellColor={GRID_LINE_COLOR}
+          sectionSize={2.2}
+          sectionThickness={0.9}
+          sectionColor={GRID_MAJOR_COLOR}
+          fadeDistance={16}
+          fadeStrength={1.4}
+          followCamera={false}
+          infiniteGrid={false}
+        />
+      )}
 
       {studs.map((pts, i) => (
         <Line
@@ -474,12 +515,12 @@ export default function GalleryEnvironment({
 
       <instancedMesh
         ref={dustRef}
-        args={[dustGeometry, flakeMaterial, DUST_COUNT]}
+        args={[dustGeometry, flakeMaterial, bounds.dustCount]}
         frustumCulled={false}
       />
       <instancedMesh
         ref={moteRef}
-        args={[moteGeometry, flakeMaterial, MOTE_COUNT]}
+        args={[moteGeometry, flakeMaterial, bounds.moteCount]}
         frustumCulled={false}
       />
       <instancedMesh

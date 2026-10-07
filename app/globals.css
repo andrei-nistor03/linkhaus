@@ -15,6 +15,10 @@
 html {
   background: #f5f3ee;
   scroll-behavior: auto;
+  /* Do not set overflow on the root: any value other than `visible` makes the
+     root the nearest scrollport, which stops the `position: sticky` panels in
+     Hero and Contact from ever sticking. Sideways overflow is clipped by the
+     rule on body below, which propagates to the viewport instead. */
 }
 
 html.lenis,
