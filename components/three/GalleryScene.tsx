@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import GalleryCameraRig from "./GalleryCameraRig";
@@ -12,6 +12,7 @@ import PanelGlow from "./PanelGlow";
 import { PROJECTS } from "@/components/projects/projectsData";
 import { useIsTouch, useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import { galleryMetrics, VERTICAL_QUERY } from "@/lib/galleryLayout";
+import { useInView } from "@/lib/useInView";
 
 export default function GalleryScene() {
   const isTouch = useIsTouch();
@@ -19,6 +20,8 @@ export default function GalleryScene() {
   const vertical = useMediaQuery(VERTICAL_QUERY);
   const heavy = !isTouch && !reduced;
   const metrics = useMemo(() => galleryMetrics(vertical), [vertical]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const inView = useInView(canvasRef);
 
   // The dust field rides along with the horizontal rail, but in the vertical
   // stack the track scrolls on the same axis the flakes rise on — so it's
@@ -27,8 +30,10 @@ export default function GalleryScene() {
 
   return (
     <Canvas
+      ref={canvasRef}
+      frameloop={inView ? "always" : "demand"}
       dpr={[1, heavy ? 1.75 : 1]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      gl={{ antialias: !isTouch, powerPreference: "high-performance" }}
       shadows={heavy}
       className="!absolute inset-0"
     >

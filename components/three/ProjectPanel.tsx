@@ -150,8 +150,8 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
         {project.thumbnail && (
           <PanelMedia
             index={index}
-            thumbnail={project.thumbnail}
-            video={project.video}
+            thumbnail={(metrics.vertical && project.thumbnailMobile) || project.thumbnail}
+            video={(metrics.vertical && project.videoMobile) || project.video}
             isTouch={isTouch}
             reducedMotion={reducedMotion}
             signals={mediaSignals}
@@ -168,7 +168,9 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
         <div
           ref={captionTopRef}
           aria-hidden="true"
-          className="font-mono-label whitespace-nowrap rounded-full bg-paper/70 px-3 py-1 text-xs text-ink/70 backdrop-blur-sm"
+          // Backdrop blur over a canvas that redraws every frame is re-blurred
+          // every frame; touch devices get a near-opaque pill instead.
+          className={`font-mono-label whitespace-nowrap rounded-full px-3 py-1 text-xs text-ink/70 ${isTouch ? "bg-paper/90" : "bg-paper/70 backdrop-blur-sm"}`}
         >
           Project {project.index} / {String(PANEL_COUNT).padStart(2, "0")}
         </div>
@@ -183,7 +185,7 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
         <div
           ref={captionBottomRef}
           aria-hidden="true"
-          className={`flex flex-col items-center whitespace-nowrap rounded-2xl bg-paper/75 px-5 py-3 text-center backdrop-blur-sm transition-transform duration-300 ${emphasized ? "scale-[1.04]" : ""}`}
+          className={`flex flex-col items-center whitespace-nowrap rounded-2xl px-5 py-3 text-center transition-transform ${isTouch ? "bg-paper/90" : "bg-paper/75 backdrop-blur-sm"} duration-300 ${emphasized ? "scale-[1.04]" : ""}`}
         >
           <span
             className="font-display font-black uppercase leading-none tracking-wider text-ink [font-variation-settings:'wght'_800,'CNTR'_0] text-2xl"

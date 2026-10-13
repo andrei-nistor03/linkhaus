@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger, SplitText, registerGsap } from "@/lib/gsap";
 import { contactState } from "@/lib/contactState";
-import { useReducedMotion } from "@/lib/useMediaQuery";
+import { isTouchDevice, useReducedMotion } from "@/lib/useMediaQuery";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import TransitionVeil from "@/components/contact/TransitionVeil";
 import MagneticButton from "@/components/ui/MagneticButton";
@@ -39,6 +39,9 @@ export default function Contact() {
     registerGsap();
     const section = sectionRef.current;
     if (!section) return;
+    // Blurring the whole content block every scroll frame is too heavy on
+    // phones; they keep the fade and scale only.
+    const blurs = !isTouchDevice();
 
     const st = ScrollTrigger.create({
       trigger: section,
@@ -53,7 +56,7 @@ export default function Contact() {
         const fade = gsap.utils.clamp(0, 1, (self.progress - CONTENT_FADE_FROM) / (1 - CONTENT_FADE_FROM));
         content.style.opacity = String(1 - fade);
         if (!reducedMotion) {
-          content.style.filter = fade > 0 ? `blur(${fade * 14}px)` : "";
+          if (blurs) content.style.filter = fade > 0 ? `blur(${fade * 14}px)` : "";
           content.style.transform = fade > 0 ? `scale(${1 - fade * 0.05})` : "";
         }
       },
@@ -74,6 +77,7 @@ export default function Contact() {
 
     let cancelled = false;
     let ctx: gsap.Context | undefined;
+    const lineBlur = (px: number) => (isTouchDevice() ? {} : { filter: `blur(${px}px)` });
 
     const setup = () => {
       if (cancelled) return;
@@ -91,7 +95,7 @@ export default function Contact() {
         }
 
         gsap.set(eyebrowRef.current, { opacity: 0, y: 12 });
-        gsap.set(lines, { yPercent: 115, opacity: 0, scale: 1.06, filter: "blur(16px)" });
+        gsap.set(lines, { yPercent: 115, opacity: 0, scale: 1.06, ...lineBlur(16) });
 
         const subSplit = SplitText.create(subtitleRef.current!, {
           type: "lines",
@@ -111,7 +115,7 @@ export default function Contact() {
               yPercent: 0,
               opacity: 1,
               scale: 1,
-              filter: "blur(0px)",
+              ...lineBlur(0),
               duration: 1.2,
               ease: "expo.out",
               stagger: 0.12,
@@ -192,7 +196,7 @@ export default function Contact() {
         <div
           ref={contentRef}
           className="relative z-20 flex h-full w-full flex-col items-center justify-center px-5 text-center sm:px-8"
-          style={{ willChange: "opacity, transform, filter" }}
+          style={{ willChange: "opacity, transform" }}
         >
           <p ref={eyebrowRef} className="font-mono-label mb-4 text-xs text-paper/50 sm:mb-6">
             <WaveLabel text={EYEBROW_TEXT} reducedMotion={reducedMotion} />
@@ -206,7 +210,7 @@ export default function Contact() {
                     titleLineRefs.current[i] = el;
                   }}
                   className="block text-[clamp(2.2rem,7vw,6rem)]"
-                  style={{ willChange: "transform, opacity, filter" }}
+                  style={{ willChange: "transform, opacity" }}
                 >
                   {line}
                 </span>

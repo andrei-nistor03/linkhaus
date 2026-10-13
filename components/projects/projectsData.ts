@@ -9,6 +9,9 @@ export interface Project {
   // crossfades in over it on hover (desktop) or when centered (touch).
   thumbnail?: string;
   video?: string;
+  // Lighter 960px / 480p versions used by the phone (vertical) layout.
+  thumbnailMobile?: string;
+  videoMobile?: string;
 }
 
 export const PROJECTS: Project[] = [
@@ -22,6 +25,8 @@ export const PROJECTS: Project[] = [
     year: "2026",
     thumbnail: "/assets/utopia-thumbnail-1920x1080.webp",
     video: "/assets/utopia-portfolio-final-1080p.mp4",
+    thumbnailMobile: "/assets/utopia-thumbnail-mobile.webp",
+    videoMobile: "/assets/utopia-portfolio-final-mobile.mp4",
   },
   {
     index: "02",
@@ -33,6 +38,8 @@ export const PROJECTS: Project[] = [
     year: "2026",
     thumbnail: "/assets/ecandidat-thumbnail.webp",
     video: "/assets/ecandidat-portfolio.mp4",
+    thumbnailMobile: "/assets/ecandidat-thumbnail-mobile.webp",
+    videoMobile: "/assets/ecandidat-portfolio-mobile.mp4",
   },
   {
     index: "03",
@@ -44,6 +51,8 @@ export const PROJECTS: Project[] = [
     year: "2026",
     thumbnail: "/assets/cuib-darte-thumbnail.webp",
     video: "/assets/cuib-darte-portfolio.mp4",
+    thumbnailMobile: "/assets/cuib-darte-thumbnail-mobile.webp",
+    videoMobile: "/assets/cuib-darte-portfolio-mobile.mp4",
   },
   {
     index: "04",
@@ -55,5 +64,7 @@ export const PROJECTS: Project[] = [
     year: "2026",
     thumbnail: "/assets/Nocturne_Thumbnail_Devices.webp",
     video: "/assets/Nocturne_Portfolio.mp4",
+    thumbnailMobile: "/assets/Nocturne_Thumbnail_Devices-mobile.webp",
+    videoMobile: "/assets/Nocturne_Portfolio-mobile.mp4",
   },
 ];

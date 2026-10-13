@@ -5,6 +5,7 @@ import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { INTRO_COMPLETE_EVENT } from "./Preloader";
 import MagneticButton from "@/components/ui/MagneticButton";
 import { handleSectionLink } from "@/lib/navTransitionState";
+import { isTouchDevice } from "@/lib/useMediaQuery";
 
 const LINKS = [
   { label: "Work", href: "#work" },
@@ -13,6 +14,21 @@ const LINKS = [
 ];
 
 const PILL_THRESHOLD = 48;
+
+// The nav floats over live canvases, so a backdrop blur gets recomputed every
+// frame. Touch devices skip it and get a more opaque fill instead.
+function navSurface(pill: boolean) {
+  if (isTouchDevice()) {
+    return {
+      backgroundColor: pill ? "rgba(245,243,238,0.95)" : "rgba(245,243,238,0.9)",
+      backdropFilter: "none",
+    };
+  }
+  return {
+    backgroundColor: pill ? "rgba(245,243,238,0.85)" : "rgba(245,243,238,0.6)",
+    backdropFilter: pill ? "blur(14px)" : "blur(8px)",
+  };
+}
 
 export default function Nav() {
   const navRef = useRef<HTMLElement>(null);
@@ -33,10 +49,9 @@ export default function Nav() {
       paddingLeft: "1.25rem",
       paddingRight: "1.25rem",
       borderRadius: 0,
-      backgroundColor: "rgba(245,243,238,0.6)",
       borderColor: "rgba(13,13,13,0.06)",
       boxShadow: "0 1px 0 rgba(13,13,13,0.07)",
-      backdropFilter: "blur(8px)",
+      ...navSurface(false),
     });
 
     const onIntro = () => {
@@ -69,12 +84,11 @@ export default function Nav() {
       paddingLeft: pill ? "1.35rem" : "1.25rem",
       paddingRight: pill ? "0.6rem" : "1.25rem",
       borderRadius: pill ? 999 : 0,
-      backgroundColor: pill ? "rgba(245,243,238,0.85)" : "rgba(245,243,238,0.6)",
       borderColor: pill ? "rgba(13,13,13,0.08)" : "rgba(13,13,13,0.06)",
       boxShadow: pill
         ? "0 8px 30px -12px rgba(13,13,13,0.2)"
         : "0 1px 0 rgba(13,13,13,0.07)",
-      backdropFilter: pill ? "blur(14px)" : "blur(8px)",
+      ...navSurface(pill),
       duration: 0.7,
       ease: "art",
       overwrite: "auto",

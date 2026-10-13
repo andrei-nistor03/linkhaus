@@ -103,6 +103,7 @@ export default function HalftoneBackground() {
       if (trail.length) trail = trail.filter((p) => now - p.t < TRAIL_DURATION);
 
       ctx!.clearRect(0, 0, width, height);
+      ctx!.fillStyle = `rgb(${DOT_COLOR})`;
 
       for (let iy = 0; iy < rows; iy++) {
         const y = iy * spacing;
@@ -141,7 +142,6 @@ export default function HalftoneBackground() {
 
           const radius = level * localCeiling;
           ctx!.globalAlpha = Math.min(1, 0.2 + level * 0.85);
-          ctx!.fillStyle = `rgb(${DOT_COLOR})`;
           ctx!.beginPath();
           ctx!.arc(x, y, radius, 0, Math.PI * 2);
           ctx!.fill();
@@ -149,19 +149,42 @@ export default function HalftoneBackground() {
       }
     }
 
+    // The hero's scroll-out fades this layer's wrapper to opacity 0; once it's
+    // invisible there's no point drawing it.
+    const fader = parent;
+    function faded() {
+      const o = fader.style.opacity;
+      return o !== "" && parseFloat(o) < 0.01;
+    }
+
     function loop(now: number) {
-      draw(now);
+      if (!faded()) draw(now);
       raf = requestAnimationFrame(loop);
     }
 
+    // Only run the loop while the canvas is on screen.
+    let running = false;
+    function start() {
+      if (running) return;
+      running = true;
+      raf = requestAnimationFrame(loop);
+    }
+    function stop() {
+      running = false;
+      cancelAnimationFrame(raf);
+    }
+
+    let io: IntersectionObserver | undefined;
     if (reducedMotion) {
       draw(started + 1);
     } else {
-      raf = requestAnimationFrame(loop);
+      io = new IntersectionObserver(([entry]) => (entry.isIntersecting ? start() : stop()));
+      io.observe(canvas);
     }
 
     return () => {
-      cancelAnimationFrame(raf);
+      stop();
+      io?.disconnect();
       ro.disconnect();
       window.removeEventListener("pointermove", onMove);
     };

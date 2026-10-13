@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { gsap, ScrollTrigger, SplitText, registerGsap } from "@/lib/gsap";
-import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
+import { isTouchDevice, useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import ServicesBackdrop from "@/components/services/ServicesBackdrop";
 import ServiceStack from "@/components/services/stack/ServiceStack";
 import WaveLabel from "@/components/ui/WaveLabel";
@@ -70,7 +70,9 @@ export default function Services() {
           return;
         }
 
-        gsap.set(titleRef.current, { opacity: 0, y: 20, filter: "blur(14px)" });
+        // Phones skip the blur: a filter on a headline this size is costly.
+        const blurs = !isTouchDevice();
+        gsap.set(titleRef.current, { opacity: 0, y: 20, ...(blurs && { filter: "blur(14px)" }) });
 
         const subSplit = SplitText.create(subtitleRef.current!, {
           type: "lines",
@@ -89,7 +91,7 @@ export default function Services() {
         tl.to(titleRef.current, {
           opacity: 1,
           y: 0,
-          filter: "blur(0px)",
+          ...(blurs && { filter: "blur(0px)" }),
           duration: 1.1,
           ease: "expo.out",
         }).to(

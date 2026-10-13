@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, Lightformer, PerspectiveCamera } from "@react-three/drei";
 import WallsModel from "./WallsModel";
@@ -8,16 +8,23 @@ import PulsatingLight from "./PulsatingLight";
 import CameraRig from "./CameraRig";
 import PointerTracker from "./PointerTracker";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
+import { useInView } from "@/lib/useInView";
 
 export default function HeroScene() {
   const isTouch = useIsTouch();
   const reduced = useReducedMotion();
   const heavy = !isTouch && !reduced;
+  // Off-screen the scene only renders on demand (mount, resize), so it isn't
+  // drawing every frame underneath the rest of the page.
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const inView = useInView(canvasRef);
 
   return (
     <Canvas
+      ref={canvasRef}
+      frameloop={inView ? "always" : "demand"}
       dpr={[1, heavy ? 1.75 : 1]}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      gl={{ antialias: !isTouch, alpha: true, powerPreference: "high-performance" }}
       shadows={heavy}
       className="!absolute inset-0"
     >

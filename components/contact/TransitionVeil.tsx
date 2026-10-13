@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 import { gsap, registerGsap } from "@/lib/gsap";
+import { isTouchDevice } from "@/lib/useMediaQuery";
 
 interface TransitionVeilProps {
   sectionRef: RefObject<HTMLElement | null>;
@@ -30,17 +31,24 @@ export default function TransitionVeil({
       return;
     }
 
+    // A full-screen backdrop blur scrubbed over the live Contact canvas is
+    // far too heavy for phones; touch devices get the same wash and word
+    // without any blur.
+    const blurs = !isTouchDevice();
+    const textBlur = (px: number) => (blurs ? { filter: `blur(${px}px)` } : {});
+
     const ctx = gsap.context(() => {
       gsap.set(root, { opacity: 1 });
       gsap.set(washRef.current, { opacity: 0 });
       gsap.set(textRef.current, {
         opacity: 0,
         scale: 1.16,
-        filter: "blur(18px)",
+        ...textBlur(18),
       });
 
       const blur = { px: 0 };
       const applyBlur = () => {
+        if (!blurs) return;
         root.style.backdropFilter = `blur(${blur.px}px)`;
         root.style.setProperty("-webkit-backdrop-filter", `blur(${blur.px}px)`);
       };
@@ -69,7 +77,7 @@ export default function TransitionVeil({
           {
             opacity: 1,
             scale: 1,
-            filter: "blur(0px)",
+            ...textBlur(0),
             duration: 0.4,
             ease: "power2.out",
           },
@@ -90,7 +98,7 @@ export default function TransitionVeil({
           {
             opacity: 0,
             scale: 0.94,
-            filter: "blur(14px)",
+            ...textBlur(14),
             duration: 0.45,
             ease: "power1.in",
           },
@@ -115,7 +123,7 @@ export default function TransitionVeil({
         <span
           ref={textRef}
           className="font-display font-black uppercase leading-none tracking-wide text-paper [font-variation-settings:'wght'_900,'CNTR'_0] text-[clamp(2.5rem,9vw,7rem)]"
-          style={{ willChange: "transform, opacity, filter" }}
+          style={{ willChange: "transform, opacity" }}
         >
           CONTACT
         </span>

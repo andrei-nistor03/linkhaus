@@ -81,6 +81,12 @@ export default function PanelMedia({ index, thumbnail, video, isTouch, reducedMo
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       canvasVisible.current = entry.isIntersecting;
+      // The scene stops rendering once it's off-screen, so useFrame won't be
+      // around to pause the video — do it here.
+      if (!entry.isIntersecting && playing.current) {
+        playing.current = false;
+        videoEl.current?.pause();
+      }
     });
     observer.observe(gl.domElement);
     return () => observer.disconnect();

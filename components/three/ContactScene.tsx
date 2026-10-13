@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import ContactField from "./ContactField";
 import ContactParticles from "./ContactParticles";
 import ContactPointer from "./ContactPointer";
 import { contactState } from "@/lib/contactState";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
+import { useInView } from "@/lib/useInView";
 
 const DESKTOP_PARTICLES = 140;
 const TOUCH_PARTICLES = 45;
@@ -14,6 +15,8 @@ const TOUCH_PARTICLES = 45;
 export default function ContactScene() {
   const isTouch = useIsTouch();
   const reducedMotion = useReducedMotion();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const inView = useInView(canvasRef);
 
   useEffect(() => {
     contactState.isTouch = isTouch;
@@ -24,6 +27,8 @@ export default function ContactScene() {
 
   return (
     <Canvas
+      ref={canvasRef}
+      frameloop={inView ? "always" : "demand"}
       dpr={[1, isTouch || reducedMotion ? 1 : 1.5]}
       gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
       className="!absolute inset-0"

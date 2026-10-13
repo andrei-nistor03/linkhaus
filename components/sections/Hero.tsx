@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef } from "react";
 import { gsap, registerGsap } from "@/lib/gsap";
 import { scrollState } from "@/lib/scrollState";
-import { useReducedMotion } from "@/lib/useMediaQuery";
+import { isTouchDevice, useReducedMotion } from "@/lib/useMediaQuery";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import HalftoneBackground from "@/components/hero/HalftoneBackground";
 import { INTRO_COMPLETE_EVENT } from "@/components/layout/Preloader";
@@ -238,7 +238,9 @@ export default function Hero() {
           scrollIndicatorRef.current,
           scrollIndicatorTextRef.current,
         ],
-        reducedMotion
+        // Phones skip the blur: it would re-blur the halftone canvas (redrawn
+        // every frame) on every frame of the scroll-out.
+        reducedMotion || isTouchDevice()
           ? { opacity: 0, ease: "none", duration: 0.4 }
           : {
               opacity: 0,
@@ -310,73 +312,77 @@ export default function Hero() {
     <section id="top" ref={wrapperRef} className="relative h-[240vh]">
       <div
         ref={pinRef}
-        // svh, not vh: on mobile `100vh` is the viewport with the browser
-        // chrome hidden, so a vh-sized hero puts its lower words and the
-        // scroll cue below the fold until you scroll. svh is the always-
-        // visible height, so the whole hero fits on screen from the start.
-        className="sticky top-0 h-svh w-full overflow-hidden bg-paper"
+        // lvh: the height of the screen once the mobile browser's toolbar
+        // hides on scroll. Only the background layers fill it, so no blank
+        // strip shows up under the toolbar when it slides away.
+        className="sticky top-0 h-lvh w-full overflow-hidden bg-paper"
       >
         <div ref={bgDissolveRef} className="absolute inset-0">
           <HalftoneBackground />
         </div>
 
-        <div className="absolute -inset-x-[16%] -top-[1%] -bottom-[26%] md:inset-0">
-          <SceneErrorBoundary fallback={<div className="absolute inset-0" />}>
-            <HeroScene />
-          </SceneErrorBoundary>
-        </div>
+        {/* svh, not vh/lvh: the always-visible height (toolbar shown), so the
+            title, scene and scroll cue all fit on screen from the start and
+            stay put when the toolbar hides. */}
+        <div className="absolute inset-x-0 top-0 h-svh">
+          <div className="absolute -inset-x-[16%] -top-[1%] -bottom-[26%] md:inset-0">
+            <SceneErrorBoundary fallback={<div className="absolute inset-0" />}>
+              <HeroScene />
+            </SceneErrorBoundary>
+          </div>
 
-        <div className="pointer-events-none absolute inset-0 mix-blend-difference">
-          <h1
-            ref={titleDissolveRef}
-            aria-label="Welcome to the house of online presence"
-            className="absolute inset-0"
+          <div className="pointer-events-none absolute inset-0 mix-blend-difference">
+            <h1
+              ref={titleDissolveRef}
+              aria-label="Welcome to the house of online presence"
+              className="absolute inset-0"
+            >
+              {HERO_WORDS.map((word, wi) => (
+                <span
+                  key={word.text}
+                  aria-hidden="true"
+                  className={`absolute inline-block whitespace-nowrap font-display font-black uppercase leading-[0.85] tracking-wider text-white [font-variation-settings:'wght'_900,'CNTR'_0] ${word.size} ${word.position}`}
+                >
+                  {word.text.split("").map((char, ci) => (
+                    <span
+                      key={ci}
+                      ref={(el) => {
+                        titleCharsRef.current[wordCharStarts[wi] + ci] = el;
+                      }}
+                      className="inline-block"
+                    >
+                      {char}
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </h1>
+          </div>
+
+          <div
+            ref={scrollIndicatorRef}
+            aria-hidden="true"
+            className="absolute bottom-0 right-0 z-10 h-56 w-20 rounded-tl-[2.5rem] bg-white mix-blend-difference sm:h-72 sm:w-24 sm:rounded-tl-[3rem] lg:h-96 lg:w-28 lg:rounded-tl-[4rem]"
+          />
+          <div
+            ref={scrollIndicatorTextRef}
+            aria-hidden="true"
+            className="absolute bottom-0 right-0 z-10 flex h-56 w-20 flex-col items-center py-4 sm:h-72 sm:w-24 sm:py-5 lg:h-96 lg:w-28 lg:py-6"
           >
-            {HERO_WORDS.map((word, wi) => (
-              <span
-                key={word.text}
-                aria-hidden="true"
-                className={`absolute inline-block whitespace-nowrap font-display font-black uppercase leading-[0.85] tracking-wider text-white [font-variation-settings:'wght'_900,'CNTR'_0] ${word.size} ${word.position}`}
-              >
-                {word.text.split("").map((char, ci) => (
-                  <span
-                    key={ci}
-                    ref={(el) => {
-                      titleCharsRef.current[wordCharStarts[wi] + ci] = el;
-                    }}
-                    className="inline-block"
-                  >
-                    {char}
-                  </span>
-                ))}
-              </span>
-            ))}
-          </h1>
-        </div>
-
-        <div
-          ref={scrollIndicatorRef}
-          aria-hidden="true"
-          className="absolute bottom-0 right-0 z-10 h-56 w-20 rounded-tl-[2.5rem] bg-white mix-blend-difference sm:h-72 sm:w-24 sm:rounded-tl-[3rem] lg:h-96 lg:w-28 lg:rounded-tl-[4rem]"
-        />
-        <div
-          ref={scrollIndicatorTextRef}
-          aria-hidden="true"
-          className="absolute bottom-0 right-0 z-10 flex h-56 w-20 flex-col items-center py-4 sm:h-72 sm:w-24 sm:py-5 lg:h-96 lg:w-28 lg:py-6"
-        >
-          <span className="flex flex-col items-center font-display text-2xl font-black uppercase leading-none text-white [font-variation-settings:'wght'_900,'CNTR'_0] sm:text-3xl lg:text-4xl">
-            {"Scroll".split("").map((char, i) => (
-              <span
-                key={i}
-                className={`scale-x-125 ${i === 0 ? "" : "-mt-1 sm:-mt-1.5 lg:-mt-2"}`}
-              >
-                {char}
-              </span>
-            ))}
-          </span>
-          <span className="relative -mt-1 w-1 flex-1 overflow-hidden rounded-full bg-white/60 sm:-mt-1.5 sm:w-1.5 lg:-mt-2">
-            <span className="scroll-indicator-dot absolute inset-x-0 top-0 h-4 rounded-full bg-white sm:h-5" />
-          </span>
+            <span className="flex flex-col items-center font-display text-2xl font-black uppercase leading-none text-white [font-variation-settings:'wght'_900,'CNTR'_0] sm:text-3xl lg:text-4xl">
+              {"Scroll".split("").map((char, i) => (
+                <span
+                  key={i}
+                  className={`scale-x-125 ${i === 0 ? "" : "-mt-1 sm:-mt-1.5 lg:-mt-2"}`}
+                >
+                  {char}
+                </span>
+              ))}
+            </span>
+            <span className="relative -mt-1 w-1 flex-1 overflow-hidden rounded-full bg-white/60 sm:-mt-1.5 sm:w-1.5 lg:-mt-2">
+              <span className="scroll-indicator-dot absolute inset-x-0 top-0 h-4 rounded-full bg-white sm:h-5" />
+            </span>
+          </div>
         </div>
 
         <div
