@@ -14,6 +14,12 @@ const HeroScene = dynamic(() => import("@/components/three/HeroScene"), {
   loading: () => null,
 });
 
+// Phones: each word is sized by min(vw, svh) so it scales with the screen's
+// width and height. The numbers match the old fixed sizes on a 390×844 screen.
+// md+ (tablet and desktop): the desktop layout, sized purely in vw so tablets
+// get a scaled-down copy of it. Tablets (md→lg) bump the sizes ~25% (only ~10%
+// for "to"/"the", which sit side by side) to fill the space while keeping
+// every word clear of its neighbours.
 const HERO_WORDS: {
   text: string;
   size: string;
@@ -22,46 +28,46 @@ const HERO_WORDS: {
 }[] = [
   {
     text: "Welcome",
-    size: "text-[clamp(6rem,13vw,24rem)]",
-    position: "left-[10%] top-24 text-left lg:left-[11%] lg:top-[15%]",
+    size: "text-[length:min(24.5vw,11.4svh)] md:text-[16.25vw] lg:text-[length:min(13vw,24rem)]",
+    position: "left-[10%] top-[13%] text-left md:left-[11%] md:top-[15%]",
     pulseGap: 0,
   },
   {
     text: "to",
-    size: "text-[clamp(5rem,10vw,20rem)]",
-    position: "left-[62%] top-[23%] text-left lg:left-[62%] lg:top-[20%]",
+    size: "text-[length:min(20.5vw,9.5svh)] md:text-[11vw] lg:text-[length:min(10vw,20rem)]",
+    position: "left-[62%] top-[25%] text-left md:left-[62%] md:top-[20%]",
     pulseGap: 1000,
   },
   {
     text: "the",
-    size: "text-[clamp(7rem,14vw,24rem)]",
+    size: "text-[length:min(28.7vw,13.3svh)] md:text-[15.4vw] lg:text-[length:min(14vw,24rem)]",
     position:
-      "left-[10%] top-[30%] text-left lg:left-auto lg:right-[9%] lg:top-[19%]",
+      "left-[10%] top-[30%] text-left md:left-auto md:right-[9%] md:top-[19%]",
     pulseGap: 1000,
   },
   {
     text: "house",
-    size: "text-[clamp(5rem,12vw,20rem)]",
-    position: "left-[9%] top-[38%] text-left lg:left-[11%] lg:top-[47%]",
+    size: "text-[length:min(20.5vw,9.5svh)] md:text-[15vw] lg:text-[length:min(12vw,20rem)]",
+    position: "left-[9%] top-[41%] text-left md:left-[11%] md:top-[47%]",
     pulseGap: 0,
   },
   {
     text: "of",
-    size: "text-[clamp(8rem,15vw,24rem)]",
-    position: "right-[10%] top-[42%] text-right lg:right-[25%] lg:top-[45%]",
+    size: "text-[length:min(32.8vw,15.2svh)] md:text-[18.75vw] lg:text-[length:min(15vw,24rem)]",
+    position: "right-[10%] top-[42%] text-right md:right-[25%] md:top-[45%]",
     pulseGap: 1000,
   },
   {
     text: "online",
-    size: "text-[clamp(4rem,10vw,18rem)]",
-    position: "left-[8%] top-[76%] text-left lg:left-[13%] lg:top-[72%]",
+    size: "text-[length:min(16.4vw,7.6svh)] md:text-[12.5vw] lg:text-[length:min(10vw,18rem)]",
+    position: "left-[8%] top-[76%] text-left md:left-[13%] md:top-[72%]",
     pulseGap: 0,
   },
   {
     text: "presence",
-    size: "text-[clamp(5rem,10vw,16rem)]",
+    size: "text-[length:min(20.5vw,9.5svh)] md:text-[12.5vw] lg:text-[length:min(10vw,16rem)]",
     position:
-      "left-[8%] top-[86%] text-left lg:left-auto lg:right-[12%] lg:top-[74%]",
+      "left-[8%] top-[86%] text-left md:left-auto md:right-[12%] md:top-[74%]",
     pulseGap: 0,
   },
 ];

@@ -1,6 +1,7 @@
 export interface Project {
   index: string;
   title: string;
+  description: string;
   tags: string[];
   accent: string;
   year: string;
@@ -14,6 +15,8 @@ export const PROJECTS: Project[] = [
   {
     index: "01",
     title: "Utopia",
+    description:
+      "Website for Utopia Fried Chicken, a bold red-and-yellow fast-food brand. A full menu with category filters (burgers, wings, buckets, deals) and a store locator, designed mobile-first.",
     tags: ["WEB", "BRAND"],
     accent: "#e30613",
     year: "2026",
@@ -23,6 +26,8 @@ export const PROJECTS: Project[] = [
   {
     index: "02",
     title: "eCandidat",
+    description:
+      "Full-stack recruitment platform for eCandidat, built with Next.js, React and Node.js. Candidates build one profile and jobs come to them; companies post roles and get smart-matched candidates instead of mass applications.",
     tags: ["WEB", "PRODUCT"],
     accent: "#2b4bff",
     year: "2026",
@@ -32,6 +37,8 @@ export const PROJECTS: Project[] = [
   {
     index: "03",
     title: "Cuib d'Arte",
+    description:
+      "Concept website for Cuib d'Arte, an art bar where art meets drinks and stories. It has a hand-crafted paper-and-typewriter look, an events feed, table reservations and a bilingual RO/EN interface.",
     tags: ["WEB", "CONCEPT"],
     accent: "#a52a24",
     year: "2026",
@@ -41,6 +48,8 @@ export const PROJECTS: Project[] = [
   {
     index: "04",
     title: "Nocturne",
+    description:
+      "Concept website for Nocturne Cocktail Club. A \"what do you feel like tonight?\" flavour picker recommends cocktails, alongside cinematic motion, 3D product shots and table reservations.",
     tags: ["WEB", "CONCEPT"],
     accent: "#c9a45c",
     year: "2026",

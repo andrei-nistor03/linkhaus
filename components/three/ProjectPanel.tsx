@@ -167,6 +167,7 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
       >
         <div
           ref={captionTopRef}
+          aria-hidden="true"
           className="font-mono-label whitespace-nowrap rounded-full bg-paper/70 px-3 py-1 text-xs text-ink/70 backdrop-blur-sm"
         >
           Project {project.index} / {String(PANEL_COUNT).padStart(2, "0")}
@@ -181,6 +182,7 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
       >
         <div
           ref={captionBottomRef}
+          aria-hidden="true"
           className={`flex flex-col items-center whitespace-nowrap rounded-2xl bg-paper/75 px-5 py-3 text-center backdrop-blur-sm transition-transform duration-300 ${emphasized ? "scale-[1.04]" : ""}`}
         >
           <span

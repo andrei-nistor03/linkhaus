@@ -216,6 +216,16 @@ export default function Projects() {
           </span>
         </div>
 
+        {/* The gallery is drawn in WebGL, so crawlers and screen readers get
+            the same project list as plain, visually hidden HTML. */}
+        <ul className="sr-only">
+          {PROJECTS.map((project) => (
+            <li key={project.title}>
+              {project.title} — {project.tags.join(", ")}, {project.year}. {project.description}
+            </li>
+          ))}
+        </ul>
+
         {/* The horizontal progress rail only matches the desktop rail layout;
             under the dark vertical stack it just reads as a stray white line,
             so mobile relies on the index counter alone. */}

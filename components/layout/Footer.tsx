@@ -21,9 +21,7 @@ const NAV_LINKS = [
 
 const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://instagram.com/linkhaus.studio" },
-  { label: "Behance", href: "https://behance.net/linkhaus" },
-  { label: "LinkedIn", href: "https://linkedin.com/company/linkhaus" },
-  { label: "GitHub", href: "https://github.com/linkhaus" },
+  { label: "GitHub", href: "https://github.com/andrei-nistor03" },
 ];
 
 const STACK = ["Next.js", "React", "Three.js", "GSAP"];
