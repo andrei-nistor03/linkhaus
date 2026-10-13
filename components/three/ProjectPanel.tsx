@@ -8,6 +8,7 @@ import { galleryState } from "@/lib/galleryState";
 import { setCursorOverride } from "@/lib/cursorState";
 import { useIsTouch } from "@/lib/useMediaQuery";
 import { createPanelMaterial } from "./PanelMaterial";
+import PanelMedia, { type PanelMediaSignals } from "./PanelMedia";
 import {
   panelLayout,
   PANEL_WIDTH,
@@ -46,6 +47,7 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
   const tilt = useRef({ x: 0, y: 0 });
   const tiltTarget = useRef({ x: 0, y: 0 });
   const [emphasized, setEmphasized] = useState(false);
+  const mediaSignals = useRef<PanelMediaSignals>({ focus: 0, hover: 0, fade: 1 });
 
   useFrame((state, rawDelta) => {
     const inner = innerRef.current;
@@ -89,6 +91,9 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
       fade = 0.16 + reach * reach * (3 - 2 * reach) * 0.84;
     }
     material.uniforms.uFade.value = fade;
+    mediaSignals.current.focus = focusSmooth;
+    mediaSignals.current.hover = hover.current;
+    mediaSignals.current.fade = fade;
 
     const captionOpacity = (0.3 + focusSmooth * 0.6 + hover.current * 0.1) * fade;
     const lift = (1 - focusSmooth) * 6;
@@ -142,6 +147,16 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
         >
           <primitive object={material} attach="material" />
         </RoundedBox>
+        {project.thumbnail && (
+          <PanelMedia
+            index={index}
+            thumbnail={project.thumbnail}
+            video={project.video}
+            isTouch={isTouch}
+            reducedMotion={reducedMotion}
+            signals={mediaSignals}
+          />
+        )}
       </group>
 
       <Html

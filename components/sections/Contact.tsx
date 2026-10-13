@@ -18,9 +18,9 @@ const ContactScene = dynamic(() => import("@/components/three/ContactScene"), {
 const EYEBROW_TEXT = "Get In Touch";
 const TITLE_LINES = ["Let's build", "something", "unforgettable."];
 const SUBTITLE = "Have a project in mind? Email us or give us a call.";
-const EMAIL = "hello@linkhaus.studio";
-const PHONE_DISPLAY = "+40 722 108 900";
-const PHONE_HREF = "+40722108900";
+const EMAIL = "andreinistorbusiness@gmail.com";
+const PHONE_DISPLAY = "+40 734236074";
+const PHONE_HREF = "+40734236074";
 
 const CONTENT_FADE_FROM = 0.82;
 

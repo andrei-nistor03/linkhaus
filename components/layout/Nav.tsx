@@ -212,7 +212,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
         ))}
       </ul>
       <div className="font-mono-label mt-12 text-xs text-muted">
-        hello@linkhaus.studio
+        andreinistorbusiness@gmail.com
       </div>
     </div>
   );

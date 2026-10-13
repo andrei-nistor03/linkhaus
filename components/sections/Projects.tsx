@@ -40,15 +40,15 @@ const TITLE_VIEWPORT_MARGIN = 20;
 const MOBILE_QUERY = VERTICAL_QUERY;
 
 // Scroll distance the pinned section consumes, as a percentage of the
-// viewport height. The vertical stack has a shorter track (panels are
-// spaced on their short edge), so it gets proportionally less scroll to
-// keep the travel-per-pixel feel the same in both modes.
-const SCROLL_DISTANCE = 500;
-const MOBILE_SCROLL_DISTANCE = Math.round(
-  (SCROLL_DISTANCE * galleryMetrics(true).trackLength) /
-    galleryMetrics(false).trackLength /
-    10,
-) * 10;
+// viewport height. It's derived from the track length, so adding or
+// removing a project keeps the same travel-per-pixel feel, and the
+// vertical stack (panels spaced on their short edge, so a shorter track)
+// gets proportionally less scroll than the horizontal rail.
+const SCROLL_VH_PER_UNIT = 20.5;
+const scrollDistanceFor = (vertical: boolean) =>
+  Math.round((SCROLL_VH_PER_UNIT * galleryMetrics(vertical).trackLength) / 10) * 10;
+const SCROLL_DISTANCE = scrollDistanceFor(false);
+const MOBILE_SCROLL_DISTANCE = scrollDistanceFor(true);
 // On mobile the label settles centered under the navbar instead of its
 // desktop corner spot; this is the gap kept between the two.
 const MOBILE_LABEL_TOP_GAP = 18;

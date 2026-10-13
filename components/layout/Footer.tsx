@@ -9,9 +9,9 @@ import FooterBackdrop from "@/components/footer/FooterBackdrop";
 import FooterWordmark from "@/components/footer/FooterWordmark";
 import FooterLink from "@/components/footer/FooterLink";
 
-const EMAIL = "hello@linkhaus.studio";
-const PHONE_DISPLAY = "+40 722 108 900";
-const PHONE_HREF = "+40722108900";
+const EMAIL = "andreinistorbusiness@gmail.com";
+const PHONE_DISPLAY = "+40 734236074";
+const PHONE_HREF = "+40734236074";
 
 const NAV_LINKS = [
   { label: "Work", href: "#work" },
