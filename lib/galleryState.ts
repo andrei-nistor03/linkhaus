@@ -4,6 +4,8 @@ export const galleryState = {
   progress: 0,
   velocity: 0,
   focus: 0,
+  // Panel closest to the frame center (see GalleryTrack).
+  nearestIndex: 0,
   hoveredIndex: -1,
 };
 

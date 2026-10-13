@@ -27,9 +27,6 @@ const CORNER_RADIUS = 0.045;
 // The video element is only created once the panel gets this close to the
 // frame center, so a visitor who never reaches it never downloads it.
 const PRELOAD_FOCUS = 0.05;
-// Touch devices have no hover, so the video plays on its own once scrolling
-// has brought the panel (almost) to the center, and stops as it leaves.
-const TOUCH_PLAY_FOCUS = 0.8;
 // Desktop hover only counts while the panel is reasonably centered; a panel
 // sliding away under a still cursor shouldn't keep playing.
 const HOVER_PLAY_FOCUS = 0.3;
@@ -75,38 +72,40 @@ export default function PanelMedia({ index, thumbnail, video, isTouch, reducedMo
     };
   }, [thumbnail, material, gl]);
 
-  // The canvas keeps rendering while the section is off-screen (and panel 0
-  // is "focused" at progress 0), so autoplay also waits for the canvas to
-  // actually be in view.
+  // Fully unloads the video (decoder, buffers, GPU texture). ensureVideo
+  // recreates it the next time the panel comes into focus.
+  const releaseVideo = () => {
+    const el = videoEl.current;
+    if (el) {
+      el.pause();
+      el.removeAttribute("src");
+      el.load();
+    }
+    videoTexture.current?.dispose();
+    videoEl.current = null;
+    videoTexture.current = null;
+    material.uniforms.uVideo.value = null;
+    material.uniforms.uVideoMix.value = 0;
+    playing.current = false;
+    frameReady.current = false;
+  };
+
+  // Autoplay waits for the canvas to actually be in view. Once it leaves,
+  // the scene stops rendering (so useFrame can't pause anything) — the video
+  // is released here instead, so it doesn't hold memory for the rest of the
+  // visit.
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       canvasVisible.current = entry.isIntersecting;
-      // The scene stops rendering once it's off-screen, so useFrame won't be
-      // around to pause the video — do it here.
-      if (!entry.isIntersecting && playing.current) {
-        playing.current = false;
-        videoEl.current?.pause();
-      }
+      if (!entry.isIntersecting) releaseVideo();
     });
     observer.observe(gl.domElement);
     return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gl]);
 
-  useEffect(() => {
-    return () => {
-      const el = videoEl.current;
-      if (el) {
-        el.pause();
-        el.removeAttribute("src");
-        el.load();
-      }
-      videoTexture.current?.dispose();
-      videoEl.current = null;
-      videoTexture.current = null;
-      playing.current = false;
-      frameReady.current = false;
-    };
-  }, [video]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => releaseVideo, [video]);
 
   // Touch autoplay is skipped for reduced motion and data-saver users; they
   // get the thumbnail. Desktop hover is an explicit request, so it always plays.
@@ -152,12 +151,15 @@ export default function PanelMedia({ index, thumbnail, video, isTouch, reducedMo
     u.uImageReady.value += ((imageLoaded.current ? 1 : 0) - u.uImageReady.value) * Math.min(1, delta * 5);
 
     if (!video) return;
-    if (focus > PRELOAD_FOCUS) ensureVideo();
+    // Touch devices have no hover, so whichever panel is closest to the
+    // center plays — there's always exactly one video running on screen.
+    const nearest = galleryState.nearestIndex === index;
+    if (focus > PRELOAD_FOCUS || (isTouch && nearest)) ensureVideo();
 
     const shouldPlay =
       canvasVisible.current &&
       (isTouch
-        ? touchAutoplay && focus > TOUCH_PLAY_FOCUS
+        ? touchAutoplay && nearest
         : galleryState.hoveredIndex === index && focus > HOVER_PLAY_FOCUS);
 
     const el = videoEl.current;

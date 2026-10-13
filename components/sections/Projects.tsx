@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef } from "react";
-import { gsap, registerGsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { galleryState } from "@/lib/galleryState";
 import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
@@ -120,10 +120,12 @@ export default function Projects() {
           id: GALLERY_SCROLL_TRIGGER_ID,
           trigger: wrapperRef.current,
           start: "top top",
-          end: `+=${scrollDistance}%`,
+          // CSS sticky does the pinning (see Hero.tsx); the range is exactly
+          // how long the panel stays stuck.
+          end: () =>
+            `+=${Math.max(1, wrapperRef.current!.offsetHeight - pinRef.current!.offsetHeight)}`,
+          invalidateOnRefresh: true,
           scrub: 1.3,
-          pin: pinRef.current,
-          pinSpacing: true,
           onUpdate: (self) => {
             galleryState.progress = self.progress;
             galleryState.velocity = gsap.utils.clamp(-1, 1, self.getVelocity() / 2500);
@@ -131,6 +133,10 @@ export default function Projects() {
         },
       });
     }, wrapperRef);
+    // Every trigger further down the page (Services, the Contact veil, ...)
+    // depends on this section's height, so re-measure them all whenever the
+    // layout mode flips.
+    ScrollTrigger.refresh();
 
     const onTick = () => {
       const p = galleryState.progress;
@@ -174,6 +180,7 @@ export default function Projects() {
       window.removeEventListener("resize", measureLabelCenterOffset);
       ctx.revert();
       galleryState.progress = 0;
+      galleryState.nearestIndex = 0;
       galleryState.velocity = 0;
       galleryState.hoveredIndex = -1;
     };
@@ -183,8 +190,17 @@ export default function Projects() {
     <section
       id="work"
       ref={wrapperRef}
-      className="relative"
-      style={{ height: `${scrollDistance + 100}vh` }}
+      // Height comes from CSS (the sm breakpoint matches VERTICAL_QUERY), so
+      // it's right from the first paint. Set from JS it rendered at the
+      // desktop height on phones until hydration finished, which pushed
+      // every ScrollTrigger below it (e.g. the Contact veil) out of place.
+      className="relative h-[var(--h-mobile)] sm:h-[var(--h-desktop)]"
+      style={
+        {
+          "--h-mobile": `${MOBILE_SCROLL_DISTANCE + 100}vh`,
+          "--h-desktop": `${SCROLL_DISTANCE + 100}vh`,
+        } as React.CSSProperties
+      }
     >
       <div ref={pinRef} className="sticky top-0 h-screen w-full overflow-hidden bg-paper">
         <SceneErrorBoundary fallback={<div className="absolute inset-0 bg-paper" />}>

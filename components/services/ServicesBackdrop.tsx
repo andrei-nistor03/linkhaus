@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties } from "react";
-import { gsap, registerGsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 import { GRID_LINE_COLOR, GRID_MAJOR_COLOR, GRID_MAJOR_RATIO, hexToRgba } from "@/lib/gridTheme";
 
@@ -34,48 +34,59 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
 
     let onMove: ((e: PointerEvent) => void) | undefined;
 
+    // The grid spans the whole (very tall) section. Animating it turns it
+    // into one giant GPU layer and the moving light mask repaints it every
+    // frame, which phones can't afford (it's a likely cause of tab crashes).
+    // Touch devices get the static grid only; desktop keeps the motion but
+    // only while the section is on screen.
+    if (isTouch) return;
+
     const ctx = gsap.context(() => {
+      const loops: gsap.core.Tween[] = [];
       if (!reducedMotion && gridRef.current) {
-        gsap.to(gridRef.current, {
-          x: -GRID_TILE,
-          y: -GRID_TILE,
-          duration: 40,
-          ease: "none",
-          repeat: -1,
-        });
+        loops.push(
+          gsap.to(gridRef.current, {
+            x: -GRID_TILE,
+            y: -GRID_TILE,
+            duration: 40,
+            ease: "none",
+            repeat: -1,
+          }),
+        );
       }
 
       if (!reducedMotion && gridLightRef.current) {
-        gsap.fromTo(
-          gridLightRef.current,
-          { "--gx": "14%" },
-          { "--gx": "86%", duration: 10, ease: "sine.inOut", yoyo: true, repeat: -1 },
+        loops.push(
+          gsap.fromTo(
+            gridLightRef.current,
+            { "--gx": "14%" },
+            { "--gx": "86%", duration: 10, ease: "sine.inOut", yoyo: true, repeat: -1 },
+          ),
+          gsap.fromTo(
+            gridLightRef.current,
+            { "--gy": "18%" },
+            { "--gy": "82%", duration: 7, ease: "sine.inOut", yoyo: true, repeat: -1 },
+          ),
         );
-        gsap.fromTo(
-          gridLightRef.current,
-          { "--gy": "18%" },
-          { "--gy": "82%", duration: 7, ease: "sine.inOut", yoyo: true, repeat: -1 },
-        );
+      }
+
+      if (loops.length) {
+        loops.forEach((t) => t.pause());
+        ScrollTrigger.create({
+          trigger: container,
+          start: "top bottom",
+          end: "bottom top",
+          onToggle: (self) => loops.forEach((t) => (self.isActive ? t.play() : t.pause())),
+        });
       }
 
       const setGlowX = gsap.quickTo(glowWrapper, "x", { duration: 0.9, ease: "power3.out" });
       const setGlowY = gsap.quickTo(glowWrapper, "y", { duration: 0.9, ease: "power3.out" });
 
-      if (isTouch || reducedMotion) {
+      if (reducedMotion) {
         const rect = container.getBoundingClientRect();
         setGlowX(window.innerWidth / 2 - rect.left);
         setGlowY(window.innerHeight / 2 - rect.top);
-
-        if (!reducedMotion) {
-          gsap.to(glowWrapper, {
-            x: `+=140`,
-            y: `+=90`,
-            duration: 16,
-            ease: "sine.inOut",
-            yoyo: true,
-            repeat: -1,
-          });
-        }
       } else {
         onMove = (e: PointerEvent) => {
           const rect = container.getBoundingClientRect();
@@ -93,6 +104,7 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
   }, [isTouch, reducedMotion]);
 
   useEffect(() => {
+    if (isTouch) return;
     glowLayerRefs.current.forEach((el, i) => {
       if (!el) return;
       gsap.to(el, {
@@ -101,7 +113,7 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
         ease: "power2.out",
       });
     });
-  }, [activeIndex, reducedMotion]);
+  }, [activeIndex, reducedMotion, isTouch]);
 
   return (
     <div ref={containerRef} className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -125,7 +137,7 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
             backgroundSize: `${GRID_MAJOR_TILE}px ${GRID_MAJOR_TILE}px, ${GRID_MAJOR_TILE}px ${GRID_MAJOR_TILE}px, ${GRID_TILE}px ${GRID_TILE}px, ${GRID_TILE}px ${GRID_TILE}px`,
           }}
         >
-          {!reducedMotion && (
+          {!reducedMotion && !isTouch && (
             <div
               ref={gridLightRef}
               className="absolute inset-0"
@@ -151,25 +163,29 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
         </div>
       </div>
 
-      <div
-        ref={glowWrapperRef}
-        className="absolute left-0 top-0 h-[46rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full will-change-transform"
-        style={{ filter: "blur(70px)" }}
-      >
-        {accents.map((color, i) => (
-          <div
-            key={color}
-            ref={(el) => {
-              glowLayerRefs.current[i] = el;
-            }}
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: `radial-gradient(circle, ${color}33 0%, ${color}00 70%)`,
-              opacity: i === activeIndex ? 1 : 0,
-            }}
-          />
-        ))}
-      </div>
+      {/* A 46rem layer blurred by 70px is a ~50 MB texture on a 3x phone
+          screen (and on touch it sat off-screen anyway), so it's desktop-only. */}
+      {!isTouch && (
+        <div
+          ref={glowWrapperRef}
+          className="absolute left-0 top-0 h-[46rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full will-change-transform"
+          style={{ filter: "blur(70px)" }}
+        >
+          {accents.map((color, i) => (
+            <div
+              key={color}
+              ref={(el) => {
+                glowLayerRefs.current[i] = el;
+              }}
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: `radial-gradient(circle, ${color}33 0%, ${color}00 70%)`,
+                opacity: i === activeIndex ? 1 : 0,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       <div
         className="absolute inset-0"

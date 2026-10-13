@@ -69,6 +69,12 @@ export default function ServiceStack({ clusters, onActive }: ServiceStackProps) 
           if (!sentinel || !spacer || !sticky) return;
 
           const count = cluster.items.length;
+          // The progress value goes on the fill bars themselves: set on the
+          // sticky wrapper, this inherited custom property restyled the whole
+          // card (live demo included) on every scroll frame.
+          const fills = Array.from(sticky.querySelectorAll<HTMLElement>(".svc-progress-fill"));
+          const setItemProgress = (value: string) =>
+            fills.forEach((el) => el.style.setProperty("--item-progress", value));
           // Resolved `top` of the sticky card in px — where it docks.
           const dockTop = () => parseFloat(getComputedStyle(sticky).top) || 0;
 
@@ -88,7 +94,7 @@ export default function ServiceStack({ clusters, onActive }: ServiceStackProps) 
 
           if (compact) {
             stepTriggers.current[i] = null;
-            sticky.style.setProperty("--item-progress", "1");
+            setItemProgress("1");
             return;
           }
 
@@ -98,7 +104,7 @@ export default function ServiceStack({ clusters, onActive }: ServiceStackProps) 
             const scaled = progress * count;
             const step = Math.min(count - 1, Math.floor(scaled));
             const local = progress >= 1 ? 1 : scaled - step;
-            sticky.style.setProperty("--item-progress", local.toFixed(3));
+            setItemProgress(local.toFixed(3));
             setStepFor(i, step);
           };
 

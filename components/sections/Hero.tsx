@@ -213,13 +213,17 @@ export default function Hero() {
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
+        // No GSAP `pin`: the panel is already CSS-sticky. Pinning it as well
+        // flipped it to position:fixed from JS, which lags behind mobile
+        // momentum scrolling and instant jumps (back-to-top) and left the
+        // background misplaced. The range is exactly how long it stays stuck.
         scrollTrigger: {
           trigger: wrapperRef.current,
           start: "top top",
-          end: "+=140%",
+          end: () =>
+            `+=${Math.max(1, wrapperRef.current!.offsetHeight - pinRef.current!.offsetHeight)}`,
+          invalidateOnRefresh: true,
           scrub: 1,
-          pin: pinRef.current,
-          pinSpacing: true,
           onUpdate: (self) => {
             scrollState.heroProgress = self.progress;
             scrollState.velocity = gsap.utils.clamp(

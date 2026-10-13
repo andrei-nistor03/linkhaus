@@ -189,6 +189,20 @@ html.has-custom-cursor button {
   will-change: transform, opacity;
 }
 
+/* Touch devices: the 3.5% grain is all but invisible on a phone, but as a
+   fixed full-screen blend layer it forced the whole screen to be re-blended
+   every frame over the live canvases. The headline's animated gradient
+   repainted the whole headline every frame; it holds its first frame. */
+@media (pointer: coarse) {
+  .grain {
+    display: none;
+  }
+  .services-lava-text {
+    animation: none;
+    will-change: auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

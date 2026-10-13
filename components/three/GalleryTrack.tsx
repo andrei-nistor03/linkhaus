@@ -4,7 +4,11 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { galleryState } from "@/lib/galleryState";
-import { trackOffset, type GalleryMetrics } from "@/lib/galleryLayout";
+import { PANEL_COUNT, trackOffset, type GalleryMetrics } from "@/lib/galleryLayout";
+
+// How far past the halfway point between two panels the focus has to travel
+// before the nearest panel switches, so it doesn't flicker back and forth.
+const NEAREST_HYSTERESIS = 0.12;
 
 export default function GalleryTrack({
   metrics,
@@ -40,6 +44,13 @@ export default function GalleryTrack({
     }
 
     galleryState.focus = -group.position[axis];
+
+    // Panels sit at i * spacing along the track (negated on the vertical stack).
+    const along = (metrics.vertical ? -galleryState.focus : galleryState.focus) / metrics.spacing;
+    const current = galleryState.nearestIndex;
+    if (Math.abs(along - current) > 0.5 + NEAREST_HYSTERESIS) {
+      galleryState.nearestIndex = Math.min(PANEL_COUNT - 1, Math.max(0, Math.round(along)));
+    }
   });
 
   return <group ref={groupRef}>{children}</group>;
