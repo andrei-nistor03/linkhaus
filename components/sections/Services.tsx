@@ -4,7 +4,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { gsap, ScrollTrigger, SplitText, registerGsap } from "@/lib/gsap";
 import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import ServicesBackdrop from "@/components/services/ServicesBackdrop";
-import ServiceCluster from "@/components/services/ServiceCluster";
+import ServiceStack from "@/components/services/stack/ServiceStack";
 import WaveLabel from "@/components/ui/WaveLabel";
 import { SERVICE_CLUSTERS } from "@/components/services/servicesData";
 
@@ -14,7 +14,6 @@ const SUBTITLE =
   "Every project is designed to outperform the competition. From first impression to checkout, design to infrastructure.";
 
 const ACCENTS = SERVICE_CLUSTERS.map((c) => c.accent);
-const TOTAL = SERVICE_CLUSTERS.length;
 
 const LABEL_SCALE_START = 4;
 // Mobile/tablet skip the "fly to corner" pin entirely (there's no room for
@@ -41,8 +40,6 @@ export default function Services() {
   const labelRef = useRef<HTMLHeadingElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
-  const railRef = useRef<HTMLDivElement>(null);
-  const railFillRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const reducedMotion = useReducedMotion();
   const isMobile = useMediaQuery(MOBILE_QUERY);
@@ -278,74 +275,15 @@ export default function Services() {
     };
   }, [reducedMotion, isMobile]);
 
-  useEffect(() => {
-    registerGsap();
-    const section = sectionRef.current;
-    if (!section || !railRef.current) return;
-
-    const ctx = gsap.context(() => {
-      gsap
-        .timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: "top bottom",
-            end: "top 45%",
-            scrub: true,
-          },
-        })
-        .to(railRef.current, { opacity: 1, ease: "none" });
-      gsap
-        .timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: "bottom 65%",
-            end: "bottom top",
-            scrub: true,
-          },
-        })
-        .to(railRef.current, { opacity: 0, ease: "none" });
-
-      gsap.to(railFillRef.current, {
-        scaleY: 1,
-        ease: "none",
-        scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: true,
-        },
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
-
+  // The section uses `overflow-clip`, not `overflow-hidden`: a hidden overflow
+  // would become the cards' scroll container and break their `position: sticky`.
   return (
     <section
       id="services"
       ref={sectionRef}
-      className="relative overflow-hidden bg-ink pb-[36vh] pt-[8vh] sm:pb-[42vh] sm:pt-[32vh]"
+      className="relative overflow-clip bg-ink pb-[36vh] pt-[8vh] sm:pb-[42vh] sm:pt-[32vh]"
     >
       <ServicesBackdrop activeIndex={activeIndex} accents={ACCENTS} />
-
-      <div
-        ref={railRef}
-        className="pointer-events-none fixed right-6 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-4 opacity-0 lg:flex xl:right-10"
-      >
-        <span className="font-mono-label text-[10px] text-paper/60">
-          {String(activeIndex + 1).padStart(2, "0")}
-        </span>
-        <div className="relative h-24 w-px bg-paper/15">
-          <div
-            ref={railFillRef}
-            className="absolute inset-x-0 top-0 h-full w-px origin-top bg-paper/70"
-            style={{ transform: "scaleY(0)" }}
-          />
-        </div>
-        <span className="font-mono-label text-[10px] text-paper/30">
-          {String(TOTAL).padStart(2, "0")}
-        </span>
-      </div>
 
       <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-8">
         <div className="mb-14 sm:mb-20 lg:mb-24">
@@ -371,18 +309,10 @@ export default function Services() {
             {SUBTITLE}
           </p>
         </div>
+      </div>
 
-        <div>
-          {SERVICE_CLUSTERS.map((cluster, i) => (
-            <ServiceCluster
-              key={cluster.index}
-              data={cluster}
-              position={i}
-              total={TOTAL}
-              onActive={handleActive}
-            />
-          ))}
-        </div>
+      <div className="relative z-10">
+        <ServiceStack clusters={SERVICE_CLUSTERS} onActive={handleActive} />
       </div>
     </section>
   );

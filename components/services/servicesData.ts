@@ -7,7 +7,6 @@ export interface ServiceItem {
 export interface ServiceClusterData {
   index: string;
   title: string;
-  summary: string;
   accent: string;
   items: ServiceItem[];
 }
@@ -16,7 +15,6 @@ export const SERVICE_CLUSTERS: ServiceClusterData[] = [
   {
     index: "01",
     title: "Design & Identity",
-    summary: "Where the brand becomes an interface.",
     accent: "#8a5cff",
     items: [
       {
@@ -42,7 +40,6 @@ export const SERVICE_CLUSTERS: ServiceClusterData[] = [
   {
     index: "02",
     title: "Structure & Navigation",
-    summary: "Systems that scale without losing clarity.",
     accent: "#2b4bff",
     items: [
       {
@@ -62,7 +59,6 @@ export const SERVICE_CLUSTERS: ServiceClusterData[] = [
   {
     index: "03",
     title: "Commerce & Accounts",
-    summary: "From browse to buy, without friction.",
     accent: "#ff5a1f",
     items: [
       {
@@ -82,7 +78,6 @@ export const SERVICE_CLUSTERS: ServiceClusterData[] = [
   {
     index: "04",
     title: "Engineering & Infrastructure",
-    summary: "The part nobody sees — running perfectly.",
     accent: "#c8ff4d",
     items: [
       {
