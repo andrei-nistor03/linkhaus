@@ -26,7 +26,7 @@ export default function GalleryScene() {
   // The dust field rides along with the horizontal rail, but in the vertical
   // stack the track scrolls on the same axis the flakes rise on — so it's
   // parented outside the track and stays camera-locked instead.
-  const environment = <GalleryEnvironment reducedMotion={reduced} vertical={vertical} />;
+  const environment = <GalleryEnvironment reducedMotion={reduced} vertical={vertical} lite={isTouch} />;
 
   return (
     <Canvas
@@ -61,7 +61,7 @@ export default function GalleryScene() {
         <GalleryTrack metrics={metrics}>
           {!vertical && environment}
           {PROJECTS.map((project, i) => (
-            <PanelGlow key={`glow-${project.title}`} index={i} phase={i * 1.9} metrics={metrics} />
+            <PanelGlow key={`glow-${project.title}`} index={i} phase={i * 1.9} metrics={metrics} lite={isTouch} />
           ))}
           {PROJECTS.map((project, i) => (
             <ProjectPanel

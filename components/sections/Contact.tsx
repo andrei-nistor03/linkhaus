@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger, SplitText, registerGsap } from "@/lib/gsap";
 import { contactState } from "@/lib/contactState";
 import { isTouchDevice, useReducedMotion } from "@/lib/useMediaQuery";
+import { usePauseOffscreen } from "@/lib/usePauseOffscreen";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import TransitionVeil from "@/components/contact/TransitionVeil";
 import MagneticButton from "@/components/ui/MagneticButton";
@@ -33,6 +34,7 @@ export default function Contact() {
   const ctaRef = useRef<HTMLDivElement>(null);
   const taglineRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  usePauseOffscreen(sectionRef);
 
 
   useEffect(() => {

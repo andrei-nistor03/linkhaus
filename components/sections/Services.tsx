@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { gsap, ScrollTrigger, SplitText, registerGsap } from "@/lib/gsap";
 import { isTouchDevice, useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
+import { usePauseOffscreen } from "@/lib/usePauseOffscreen";
 import ServicesBackdrop from "@/components/services/ServicesBackdrop";
 import ServiceStack from "@/components/services/stack/ServiceStack";
 import WaveLabel from "@/components/ui/WaveLabel";
@@ -42,6 +43,7 @@ export default function Services() {
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const reducedMotion = useReducedMotion();
+  usePauseOffscreen(sectionRef);
   const isMobile = useMediaQuery(MOBILE_QUERY);
 
   const handleActive = useCallback((i: number) => setActiveIndex(i), []);
@@ -236,6 +238,16 @@ export default function Services() {
         window.addEventListener("resize", remeasure);
 
         let progress = 0;
+        // The tick below only needs to run while the section is on screen.
+        let inView = false;
+        ScrollTrigger.create({
+          trigger: section,
+          start: "top bottom",
+          end: "bottom top",
+          onToggle: (self) => {
+            inView = self.isActive;
+          },
+        });
         ScrollTrigger.create({
           trigger: wrap,
           start: "center center",
@@ -252,6 +264,7 @@ export default function Services() {
         });
 
         tick = () => {
+          if (!inView) return;
           const settle = gsap.utils.clamp(0, 1, progress / LABEL_SETTLE_FRACTION);
           const eased = settle * settle * (3 - 2 * settle);
           const scale = gsap.utils.interpolate(LABEL_SCALE_START, endScale, eased);

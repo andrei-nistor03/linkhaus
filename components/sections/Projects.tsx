@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { galleryState } from "@/lib/galleryState";
 import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
+import { usePauseOffscreen } from "@/lib/usePauseOffscreen";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import WaveLabel from "@/components/ui/WaveLabel";
 import { PROJECTS } from "@/components/projects/projectsData";
@@ -62,6 +63,7 @@ export default function Projects() {
   const indexLabelRef = useRef<HTMLSpanElement>(null);
   const topScrimRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  usePauseOffscreen(wrapperRef);
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const scrollDistance = isMobile ? MOBILE_SCROLL_DISTANCE : SCROLL_DISTANCE;
 
@@ -114,7 +116,18 @@ export default function Projects() {
     measureLabelCenterOffset();
     window.addEventListener("resize", measureLabelCenterOffset);
 
+    // onTick below only needs to run while the section is on screen.
+    let inView = false;
+
     const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: wrapperRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        onToggle: (self) => {
+          inView = self.isActive;
+        },
+      });
       gsap.timeline({
         scrollTrigger: {
           id: GALLERY_SCROLL_TRIGGER_ID,
@@ -139,6 +152,7 @@ export default function Projects() {
     ScrollTrigger.refresh();
 
     const onTick = () => {
+      if (!inView) return;
       const p = galleryState.progress;
       if (railFillRef.current) {
         railFillRef.current.style.transform = `scaleX(${p})`;

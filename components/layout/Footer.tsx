@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap, registerGsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/lib/useMediaQuery";
+import { usePauseOffscreen } from "@/lib/usePauseOffscreen";
 import { handleSectionLink } from "@/lib/navTransitionState";
 import MagneticButton from "@/components/ui/MagneticButton";
 import FooterBackdrop from "@/components/footer/FooterBackdrop";
@@ -36,6 +37,7 @@ export default function Footer() {
   const dividerRef = useRef<HTMLDivElement>(null);
   const bottomRowRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  usePauseOffscreen(sectionRef);
 
   useEffect(() => {
     registerGsap();

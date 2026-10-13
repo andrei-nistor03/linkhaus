@@ -87,10 +87,13 @@ export default function PanelGlow({
   index,
   phase = 0,
   metrics,
+  lite = false,
 }: {
   index: number;
   phase?: number;
   metrics: GalleryMetrics;
+  // Touch devices skip the point light; the halo planes carry the glow.
+  lite?: boolean;
 }) {
   const layout = useMemo(() => panelLayout(index, metrics), [index, metrics]);
   // Stacked vertically the panels sit much closer together, so the halos
@@ -172,7 +175,7 @@ export default function PanelGlow({
           />
         </mesh>
       </Billboard>
-      <pointLight ref={light} color="#8a5cff" position={[0, 0, -0.3]} intensity={0.35} distance={3.2} decay={2} />
+      {!lite && <pointLight ref={light} color="#8a5cff" position={[0, 0, -0.3]} intensity={0.35} distance={3.2} decay={2} />}
     </group>
   );
 }

@@ -46,14 +46,17 @@ html.has-custom-cursor button {
   color: #f5f3ee;
 }
 
+/* Black noise whose alpha is the inverse of the noise value. Drawn normally,
+   that darkens the page exactly as multiplying by the noise did, but without
+   mix-blend-mode — which forced the browser to re-blend the whole screen
+   every frame while anything underneath (the canvases) animated. */
 .grain {
   position: fixed;
   inset: 0;
   z-index: 90;
   pointer-events: none;
   opacity: 0.035;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.5 0 0 0 0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .mask-line {
@@ -187,6 +190,13 @@ html.has-custom-cursor button {
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   will-change: transform, opacity;
+}
+
+/* Set by usePauseOffscreen on sections that are out of view. */
+[data-offscreen] *,
+[data-offscreen] *::before,
+[data-offscreen] *::after {
+  animation-play-state: paused !important;
 }
 
 /* Touch devices: the 3.5% grain is all but invisible on a phone, but as a

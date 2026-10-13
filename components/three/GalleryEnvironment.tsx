@@ -174,9 +174,14 @@ function makeDebrisPool(count: number): DebrisState[] {
 export default function GalleryEnvironment({
   reducedMotion = false,
   vertical = false,
+  lite = false,
 }: {
   reducedMotion?: boolean;
   vertical?: boolean;
+  // Touch devices: no flash lights on combustion. Every point light in the
+  // scene is evaluated for every lit pixel of every flake; the additive
+  // debris carries the effect on its own.
+  lite?: boolean;
 }) {
   const bounds = vertical ? VERTICAL_BOUNDS : HORIZONTAL_BOUNDS;
   // The flakes part around the pointer on the horizontal rail. The vertical
@@ -221,6 +226,9 @@ export default function GalleryEnvironment({
   const debris = useMemo(() => makeDebrisPool(DEBRIS_POOL), []);
   const lights = useMemo(() => makePulsePool(LIGHT_COUNT), []);
   const nextDebris = useRef(0);
+  // Starts true so the first frame scales the idle pool down to nothing;
+  // after that the debris pass only runs while some debris is alive.
+  const debrisLive = useRef(true);
   const nextLight = useRef(0);
 
   const dustGeometry = useMemo(() => new THREE.IcosahedronGeometry(1, 0), []);
@@ -307,6 +315,7 @@ export default function GalleryEnvironment({
         DEBRIS_SCALE_MIN +
         Math.random() * (DEBRIS_SCALE_MAX - DEBRIS_SCALE_MIN);
     }
+    debrisLive.current = true;
 
     const light = lights[nextLight.current % LIGHT_COUNT];
     nextLight.current++;
@@ -415,7 +424,8 @@ export default function GalleryEnvironment({
     updateField(moteRef.current, moteStates, delta, pushOriginX, pushOriginY);
 
     const debrisMesh = debrisRef.current;
-    if (debrisMesh) {
+    if (debrisMesh && debrisLive.current) {
+      let anyActive = false;
       for (let i = 0; i < debris.length; i++) {
         const d = debris[i];
         if (d.active) {
@@ -437,6 +447,7 @@ export default function GalleryEnvironment({
           dummy.rotation.set(p * 6, p * 4.2, 0);
           dummy.scale.set(sc, sc, sc);
           flashColor.setScalar(Math.max(0, 1 - p));
+          anyActive = true;
         } else {
           dummy.position.set(d.x, d.y, d.z);
           dummy.rotation.set(0, 0, 0);
@@ -449,6 +460,9 @@ export default function GalleryEnvironment({
       }
       debrisMesh.instanceMatrix.needsUpdate = true;
       if (debrisMesh.instanceColor) debrisMesh.instanceColor.needsUpdate = true;
+      // This pass already zeroed every expired piece; nothing to redo until
+      // the next combustion.
+      if (!anyActive) debrisLive.current = false;
     }
 
     for (let i = 0; i < lights.length; i++) {
@@ -529,7 +543,7 @@ export default function GalleryEnvironment({
         frustumCulled={false}
       />
 
-      {Array.from({ length: LIGHT_COUNT }, (_, i) => (
+      {!lite && Array.from({ length: LIGHT_COUNT }, (_, i) => (
         <pointLight
           key={i}
           ref={(el) => {
