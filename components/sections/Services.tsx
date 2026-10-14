@@ -1,20 +1,17 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { gsap, ScrollTrigger, SplitText, registerGsap } from "@/lib/gsap";
 import { isTouchDevice, useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import { usePauseOffscreen } from "@/lib/usePauseOffscreen";
 import ServicesBackdrop from "@/components/services/ServicesBackdrop";
 import ServiceStack from "@/components/services/stack/ServiceStack";
 import WaveLabel from "@/components/ui/WaveLabel";
-import { SERVICE_CLUSTERS } from "@/components/services/servicesData";
+import { SERVICE_CLUSTER_META, localizeServiceClusters } from "@/components/services/servicesData";
+import { useI18n } from "@/lib/i18n/I18nProvider";
+import { toDisplayGlyphs } from "@/lib/i18n/displayGlyphs";
 
-const LABEL_TEXT = "Our Services";
-const TITLE = "Websites that turn you into the obvious choice.";
-const SUBTITLE =
-  "Every project is designed to outperform the competition. From first impression to checkout, design to infrastructure.";
-
-const ACCENTS = SERVICE_CLUSTERS.map((c) => c.accent);
+const ACCENTS = SERVICE_CLUSTER_META.map((c) => c.accent);
 
 const LABEL_SCALE_START = 4;
 // Mobile/tablet skip the "fly to corner" pin entirely (there's no room for
@@ -45,6 +42,8 @@ export default function Services() {
   const reducedMotion = useReducedMotion();
   usePauseOffscreen(sectionRef);
   const isMobile = useMediaQuery(MOBILE_QUERY);
+  const { dict } = useI18n();
+  const clusters = useMemo(() => localizeServiceClusters(dict.services.clusters), [dict]);
 
   const handleActive = useCallback((i: number) => setActiveIndex(i), []);
 
@@ -308,26 +307,26 @@ export default function Services() {
               className="pointer-events-none z-20 mx-auto w-fit text-center font-display text-[clamp(1.5rem,3vw,2.25rem)] font-black uppercase leading-[0.85] tracking-wide text-paper [font-variation-settings:'wght'_900,'CNTR'_0]"
               style={{ willChange: "transform" }}
             >
-              <WaveLabel text={LABEL_TEXT} reducedMotion={reducedMotion} />
+              <WaveLabel text={toDisplayGlyphs(dict.services.label)} reducedMotion={reducedMotion} />
             </h2>
           </div>
           <h3
             ref={titleRef}
             className="services-lava-text mx-auto max-w-4xl text-balance text-center font-display text-[clamp(2.5rem,6.2vw,6rem)] font-black uppercase leading-[0.95] [font-variation-settings:'wght'_800,'CNTR'_0]"
           >
-            {TITLE}
+            {toDisplayGlyphs(dict.services.title)}
           </h3>
           <p
             ref={subtitleRef}
             className="mx-auto mt-8 max-w-2xl text-balance text-center text-lg leading-relaxed text-paper/55 sm:text-xl"
           >
-            {SUBTITLE}
+            {dict.services.subtitle}
           </p>
         </div>
       </div>
 
       <div className="relative z-10">
-        <ServiceStack clusters={SERVICE_CLUSTERS} onActive={handleActive} />
+        <ServiceStack clusters={clusters} onActive={handleActive} />
       </div>
     </section>
   );

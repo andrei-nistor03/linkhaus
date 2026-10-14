@@ -18,9 +18,13 @@ import {
   type GalleryMetrics,
 } from "@/lib/galleryLayout";
 import type { Project } from "@/components/projects/projectsData";
+import { toDisplayGlyphs } from "@/lib/i18n/displayGlyphs";
 
 interface ProjectPanelProps {
   project: Project;
+  // Caption prefix ("Project 01 / 04"). Passed in rather than read from the
+  // i18n context, since drei's <Html> renders into a separate React root.
+  label: string;
   index: number;
   reducedMotion: boolean;
   metrics: GalleryMetrics;
@@ -28,7 +32,7 @@ interface ProjectPanelProps {
 
 const MAX_TILT = 0.16;
 
-export default function ProjectPanel({ project, index, reducedMotion, metrics }: ProjectPanelProps) {
+export default function ProjectPanel({ project, label, index, reducedMotion, metrics }: ProjectPanelProps) {
   const isTouch = useIsTouch();
   const layout = useMemo(() => panelLayout(index, metrics), [index, metrics]);
   const material = useMemo(
@@ -172,7 +176,7 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
           // every frame; touch devices get a near-opaque pill instead.
           className={`font-mono-label whitespace-nowrap rounded-full px-3 py-1 text-xs text-ink/70 ${isTouch ? "bg-paper/90" : "bg-paper/70 backdrop-blur-sm"}`}
         >
-          Project {project.index} / {String(PANEL_COUNT).padStart(2, "0")}
+          {label} {project.index} / {String(PANEL_COUNT).padStart(2, "0")}
         </div>
       </Html>
 
@@ -190,7 +194,7 @@ export default function ProjectPanel({ project, index, reducedMotion, metrics }:
           <span
             className="font-display font-black uppercase leading-none tracking-wider text-ink [font-variation-settings:'wght'_800,'CNTR'_0] text-2xl"
           >
-            {project.title}
+            {toDisplayGlyphs(project.title)}
           </span>
           <span className="font-mono-label text-[11px] text-muted">
             {project.tags.join(" / ")} — {project.year}

@@ -9,16 +9,11 @@ import MagneticButton from "@/components/ui/MagneticButton";
 import FooterBackdrop from "@/components/footer/FooterBackdrop";
 import FooterWordmark from "@/components/footer/FooterWordmark";
 import FooterLink from "@/components/footer/FooterLink";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 const EMAIL = "andreinistorbusiness@gmail.com";
 const PHONE_DISPLAY = "+40 734236074";
 const PHONE_HREF = "+40734236074";
-
-const NAV_LINKS = [
-  { label: "Work", href: "#work" },
-  { label: "Services", href: "#services" },
-  { label: "Contact", href: "#contact" },
-];
 
 const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://instagram.com/linkhaus.studio" },
@@ -37,6 +32,7 @@ export default function Footer() {
   const dividerRef = useRef<HTMLDivElement>(null);
   const bottomRowRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  const { dict } = useI18n();
   usePauseOffscreen(sectionRef);
 
   useEffect(() => {
@@ -157,15 +153,15 @@ export default function Footer() {
               className="mt-6 font-mono-label text-[11px] leading-relaxed text-paper/35 sm:mt-8"
               style={{ willChange: "transform, opacity" }}
             >
-              CREATIVE DEVELOPMENT STUDIO
+              {dict.footer.metaLines[0]}
               <br />
-              BASED IN ROMANIA / WORKING WORLDWIDE
+              {dict.footer.metaLines[1]}
             </div>
           </div>
 
-          <nav aria-label="Footer">
+          <nav aria-label={dict.footer.navLabel}>
             <ul ref={navListRef} className="flex flex-col items-start gap-2.5">
-              {NAV_LINKS.map((l) => (
+              {dict.nav.links.map((l) => (
                 <li key={l.href} style={{ willChange: "transform, opacity" }}>
                   <FooterLink
                     href={l.href}
@@ -212,7 +208,7 @@ export default function Footer() {
             data-cursor="link"
             className="group inline-flex w-fit items-center gap-2 font-mono-label text-xs text-paper/50 transition-colors duration-300 ease-art hover:text-paper"
           >
-            BACK TO TOP
+            {dict.footer.backToTop}
             <span className="inline-block transition-transform duration-300 ease-art group-hover:-translate-y-1">
               &uarr;
             </span>

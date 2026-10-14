@@ -1,14 +1,16 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { galleryState } from "@/lib/galleryState";
 import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import { usePauseOffscreen } from "@/lib/usePauseOffscreen";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import WaveLabel from "@/components/ui/WaveLabel";
-import { PROJECTS } from "@/components/projects/projectsData";
+import { PROJECT_META, localizeProjects } from "@/components/projects/projectsData";
+import { useI18n } from "@/lib/i18n/I18nProvider";
+import { toDisplayGlyphs } from "@/lib/i18n/displayGlyphs";
 import {
   ENTRY_FADE_FRACTION,
   GALLERY_SCROLL_TRIGGER_ID,
@@ -21,8 +23,7 @@ const GalleryScene = dynamic(() => import("@/components/three/GalleryScene"), {
   loading: () => null,
 });
 
-const COUNT = PROJECTS.length;
-const LABEL_TEXT = "Selected Work";
+const COUNT = PROJECT_META.length;
 
 const LABEL_COLOR_FROM = "rgba(13,13,13,0.8)";
 const LABEL_COLOR_TO = "rgba(245,243,238,0.92)";
@@ -63,6 +64,8 @@ export default function Projects() {
   const indexLabelRef = useRef<HTMLSpanElement>(null);
   const topScrimRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  const { dict } = useI18n();
+  const projects = useMemo(() => localizeProjects(dict.projects.items), [dict]);
   usePauseOffscreen(wrapperRef);
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const scrollDistance = isMobile ? MOBILE_SCROLL_DISTANCE : SCROLL_DISTANCE;
@@ -235,7 +238,7 @@ export default function Projects() {
             className="font-display font-black uppercase leading-[0.85] tracking-wide [font-variation-settings:'wght'_900,'CNTR'_0] text-[clamp(1.9rem,4.4vw,3.75rem)]"
             style={{ color: LABEL_COLOR_FROM, willChange: "transform" }}
           >
-            <WaveLabel text={LABEL_TEXT} reducedMotion={reducedMotion} />
+            <WaveLabel text={toDisplayGlyphs(dict.projects.label)} reducedMotion={reducedMotion} />
           </h2>
           <span
             ref={indexLabelRef}
@@ -249,7 +252,7 @@ export default function Projects() {
         {/* The gallery is drawn in WebGL, so crawlers and screen readers get
             the same project list as plain, visually hidden HTML. */}
         <ul className="sr-only">
-          {PROJECTS.map((project) => (
+          {projects.map((project) => (
             <li key={project.title}>
               {project.title} — {project.tags.join(", ")}, {project.year}. {project.description}
             </li>

@@ -9,7 +9,8 @@ import GalleryBackdrop from "./GalleryBackdrop";
 import GalleryEnvironment from "./GalleryEnvironment";
 import ProjectPanel from "./ProjectPanel";
 import PanelGlow from "./PanelGlow";
-import { PROJECTS } from "@/components/projects/projectsData";
+import { localizeProjects } from "@/components/projects/projectsData";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 import { useIsTouch, useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import { galleryMetrics, VERTICAL_QUERY } from "@/lib/galleryLayout";
 import { useInView } from "@/lib/useInView";
@@ -20,6 +21,8 @@ export default function GalleryScene() {
   const vertical = useMediaQuery(VERTICAL_QUERY);
   const heavy = !isTouch && !reduced;
   const metrics = useMemo(() => galleryMetrics(vertical), [vertical]);
+  const { dict } = useI18n();
+  const projects = useMemo(() => localizeProjects(dict.projects.items), [dict]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inView = useInView(canvasRef);
 
@@ -60,13 +63,14 @@ export default function GalleryScene() {
         {vertical && environment}
         <GalleryTrack metrics={metrics}>
           {!vertical && environment}
-          {PROJECTS.map((project, i) => (
+          {projects.map((project, i) => (
             <PanelGlow key={`glow-${project.title}`} index={i} phase={i * 1.9} metrics={metrics} lite={isTouch} />
           ))}
-          {PROJECTS.map((project, i) => (
+          {projects.map((project, i) => (
             <ProjectPanel
               key={project.title}
               project={project}
+              label={dict.projects.panelLabel}
               index={i}
               reducedMotion={reduced}
               metrics={metrics}

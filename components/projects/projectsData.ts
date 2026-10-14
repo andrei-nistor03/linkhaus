@@ -1,8 +1,7 @@
-export interface Project {
+// Locale-independent project data. Titles, descriptions and tags live in the
+// dictionaries (lib/i18n/dictionaries), listed in the same order as here.
+export interface ProjectMeta {
   index: string;
-  title: string;
-  description: string;
-  tags: string[];
   accent: string;
   year: string;
   // Paths under /public. The thumbnail covers the panel face; the video
@@ -14,13 +13,17 @@ export interface Project {
   videoMobile?: string;
 }
 
-export const PROJECTS: Project[] = [
+export interface ProjectCopy {
+  title: string;
+  description: string;
+  tags: string[];
+}
+
+export type Project = ProjectMeta & ProjectCopy;
+
+export const PROJECT_META: ProjectMeta[] = [
   {
     index: "01",
-    title: "Utopia",
-    description:
-      "Website for Utopia Fried Chicken, a bold red-and-yellow fast-food brand. A full menu with category filters (burgers, wings, buckets, deals) and a store locator, designed mobile-first.",
-    tags: ["WEB", "BRAND"],
     accent: "#e30613",
     year: "2026",
     thumbnail: "/assets/utopia-thumbnail-1920x1080.webp",
@@ -30,10 +33,6 @@ export const PROJECTS: Project[] = [
   },
   {
     index: "02",
-    title: "eCandidat",
-    description:
-      "Full-stack recruitment platform for eCandidat, built with Next.js, React and Node.js. Candidates build one profile and jobs come to them; companies post roles and get smart-matched candidates instead of mass applications.",
-    tags: ["WEB", "PRODUCT"],
     accent: "#2b4bff",
     year: "2026",
     thumbnail: "/assets/ecandidat-thumbnail.webp",
@@ -43,10 +42,6 @@ export const PROJECTS: Project[] = [
   },
   {
     index: "03",
-    title: "Cuib d'Arte",
-    description:
-      "Concept website for Cuib d'Arte, an art bar where art meets drinks and stories. It has a hand-crafted paper-and-typewriter look, an events feed, table reservations and a bilingual RO/EN interface.",
-    tags: ["WEB", "CONCEPT"],
     accent: "#a52a24",
     year: "2026",
     thumbnail: "/assets/cuib-darte-thumbnail.webp",
@@ -56,10 +51,6 @@ export const PROJECTS: Project[] = [
   },
   {
     index: "04",
-    title: "Nocturne",
-    description:
-      "Concept website for Nocturne Cocktail Club. A \"what do you feel like tonight?\" flavour picker recommends cocktails, alongside cinematic motion, 3D product shots and table reservations.",
-    tags: ["WEB", "CONCEPT"],
     accent: "#c9a45c",
     year: "2026",
     thumbnail: "/assets/Nocturne_Thumbnail_Devices.webp",
@@ -68,3 +59,7 @@ export const PROJECTS: Project[] = [
     videoMobile: "/assets/Nocturne_Portfolio-mobile.mp4",
   },
 ];
+
+export function localizeProjects(copy: ProjectCopy[]): Project[] {
+  return PROJECT_META.map((meta, i) => ({ ...meta, ...copy[i] }));
+}

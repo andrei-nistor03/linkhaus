@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/gsap";
 import { useIsTouch } from "@/lib/useMediaQuery";
 import { subscribeCursorOverride } from "@/lib/cursorState";
+import { useI18n } from "@/lib/i18n/I18nProvider";
 
 type Variant = "default" | "link" | "project" | "3d";
 
@@ -16,6 +17,7 @@ const RING_SIZE: Record<Variant, number> = {
 
 export default function CustomCursor() {
   const isTouch = useIsTouch();
+  const { dict } = useI18n();
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const [domVariant, setDomVariant] = useState<Variant>("default");
@@ -106,16 +108,16 @@ export default function CustomCursor() {
       >
         {variant === "project" && (
           <span className="font-mono-label text-[10px] leading-tight text-black">
-            VIEW
+            {dict.cursor.project[0]}
             <br />
-            PROJECT
+            {dict.cursor.project[1]}
           </span>
         )}
         {variant === "3d" && (
           <span className="font-mono-label text-[10px] leading-tight text-black">
-            DRAG
+            {dict.cursor.explore[0]}
             <br />
-            EXPLORE
+            {dict.cursor.explore[1]}
           </span>
         )}
       </div>

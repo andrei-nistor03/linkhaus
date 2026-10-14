@@ -1,7 +1,7 @@
 import * as THREE from "three";
-import { PROJECTS } from "@/components/projects/projectsData";
+import { PROJECT_META } from "@/components/projects/projectsData";
 
-export const PANEL_COUNT = PROJECTS.length;
+export const PANEL_COUNT = PROJECT_META.length;
 export const PANEL_WIDTH = 2.7;
 export const PANEL_HEIGHT = 1.62;
 export const PANEL_DEPTH = 0.07;

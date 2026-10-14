@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { ServiceClusterData } from "../servicesData";
+import { useI18n } from "@/lib/i18n/I18nProvider";
+import { toDisplayGlyphs } from "@/lib/i18n/displayGlyphs";
 
 type Vars = CSSProperties & Record<`--${string}`, string | number>;
 
@@ -50,6 +52,7 @@ export default function ServiceCard({
   cardRef,
   shadeRef,
 }: ServiceCardProps) {
+  const { dict } = useI18n();
   const titleId = `svc-card-${data.index}`;
   const accentVars: Vars = {
     "--accent": data.accent,
@@ -73,7 +76,7 @@ export default function ServiceCard({
             id={titleId}
             className="mt-2 font-display text-[clamp(1.65rem,min(4.4vw,6.2vh),3.75rem)] font-black uppercase leading-[0.9] text-paper [font-variation-settings:'wght'_800,'CNTR'_0]"
           >
-            {data.title}
+            {toDisplayGlyphs(data.title)}
           </h3>
         </header>
 
@@ -117,7 +120,7 @@ export default function ServiceCard({
           {/* Phones / short tablets: story-style pager */}
           <div className="lg:hidden [@media(min-width:768px)_and_(min-height:900px)]:hidden">
             <div className="flex items-center gap-3">
-              <div className="flex flex-1 gap-1.5" role="tablist" aria-label={`${data.title} services`}>
+              <div className="flex flex-1 gap-1.5" role="tablist" aria-label={`${data.title} ${dict.services.tablistSuffix}`}>
                 {data.items.map((item, i) => {
                   const state = itemState(i, step);
                   return (
@@ -160,6 +163,7 @@ export default function ServiceCard({
 }
 
 function DemoStage({ step, playing, scenes }: { step: number; playing: boolean; scenes: ReactNode[] }) {
+  const { dict } = useI18n();
   const stageRef = useRef<HTMLDivElement>(null);
   // Bumping a scene's run id remounts its board, restarting its CSS
   // animations from the top each time that service becomes active.
@@ -200,7 +204,7 @@ function DemoStage({ step, playing, scenes }: { step: number; playing: boolean; 
       ))}
       <div className="svc-stage-chip">
         <i />
-        Live preview
+        {dict.services.livePreview}
       </div>
     </div>
   );

@@ -10,15 +10,14 @@ import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import TransitionVeil from "@/components/contact/TransitionVeil";
 import MagneticButton from "@/components/ui/MagneticButton";
 import WaveLabel from "@/components/ui/WaveLabel";
+import { useI18n } from "@/lib/i18n/I18nProvider";
+import { toDisplayGlyphs } from "@/lib/i18n/displayGlyphs";
 
 const ContactScene = dynamic(() => import("@/components/three/ContactScene"), {
   ssr: false,
   loading: () => null,
 });
 
-const EYEBROW_TEXT = "Get In Touch";
-const TITLE_LINES = ["Let's build", "something", "unforgettable."];
-const SUBTITLE = "Have a project in mind? Email us or give us a call.";
 const EMAIL = "andreinistorbusiness@gmail.com";
 const PHONE_DISPLAY = "+40 734236074";
 const PHONE_HREF = "+40734236074";
@@ -34,6 +33,7 @@ export default function Contact() {
   const ctaRef = useRef<HTMLDivElement>(null);
   const taglineRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  const { dict } = useI18n();
   usePauseOffscreen(sectionRef);
 
 
@@ -201,11 +201,11 @@ export default function Contact() {
           style={{ willChange: "opacity, transform" }}
         >
           <p ref={eyebrowRef} className="font-mono-label mb-4 text-xs text-paper/50 sm:mb-6">
-            <WaveLabel text={EYEBROW_TEXT} reducedMotion={reducedMotion} />
+            <WaveLabel text={dict.contact.eyebrow} reducedMotion={reducedMotion} />
           </p>
 
           <h2 className="max-w-5xl font-display font-black uppercase leading-[0.92] text-paper [font-variation-settings:'wght'_900,'CNTR'_0]">
-            {TITLE_LINES.map((line, i) => (
+            {dict.contact.titleLines.map((line, i) => (
               <span key={line} className="mask-line">
                 <span
                   ref={(el) => {
@@ -214,7 +214,7 @@ export default function Contact() {
                   className="block text-[clamp(2.2rem,7vw,6rem)]"
                   style={{ willChange: "transform, opacity" }}
                 >
-                  {line}
+                  {toDisplayGlyphs(line)}
                 </span>
               </span>
             ))}
@@ -224,7 +224,7 @@ export default function Contact() {
             ref={subtitleRef}
             className="mx-auto mt-5 max-w-xl text-balance text-base leading-relaxed text-paper/55 sm:mt-7 sm:text-xl"
           >
-            {SUBTITLE}
+            {dict.contact.subtitle}
           </p>
 
           <div
@@ -285,7 +285,7 @@ export default function Contact() {
         <div ref={taglineRef} className="flex items-center gap-2.5">
           <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-accent-acid" />
           <span className="font-mono-label text-xs text-paper/55 sm:text-sm">
-            Available for select projects
+            {dict.contact.availability}
           </span>
         </div>
       </div>
