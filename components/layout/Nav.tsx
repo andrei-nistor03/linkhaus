@@ -211,11 +211,16 @@ function MobileMenu({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // clip-path alone isn't enough to hide the closed menu: mobile browsers can
+    // drop the clip on fixed elements during pinch-zoom, so the panel is also
+    // set to visibility:hidden once the close animation finishes.
     if (open) {
+      gsap.set(el, { visibility: "visible" });
       gsap.to(el, {
         clipPath: "inset(0% 0% 0% 0%)",
         duration: 0.6,
         ease: "expo.inOut",
+        overwrite: "auto",
       });
       gsap.fromTo(
         el.querySelectorAll(".mobile-link"),
@@ -234,6 +239,10 @@ function MobileMenu({
         clipPath: "inset(0% 0% 100% 0%)",
         duration: 0.5,
         ease: "power3.inOut",
+        overwrite: "auto",
+        onComplete: () => {
+          gsap.set(el, { visibility: "hidden" });
+        },
       });
     }
   }, [open]);
@@ -243,7 +252,7 @@ function MobileMenu({
       id="mobile-menu"
       ref={ref}
       className="fixed inset-0 z-[70] flex flex-col justify-center bg-paper px-8"
-      style={{ clipPath: "inset(0% 0% 100% 0%)" }}
+      style={{ clipPath: "inset(0% 0% 100% 0%)", visibility: "hidden" }}
       aria-hidden={!open}
     >
       <ul className="flex flex-col gap-4">
