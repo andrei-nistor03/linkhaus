@@ -136,6 +136,12 @@ export default function Hero() {
         scheduleIdlePulse(wi, gap);
         return;
       }
+      // Words are display:none on phones: skip the pulse (zero widths would
+      // give NaN scales) but keep checking in case the viewport widens.
+      if (chars[0].offsetWidth === 0) {
+        scheduleIdlePulse(wi, 1000);
+        return;
+      }
 
       const n = chars.length;
       const candidates = [...Array(n).keys()].filter(
@@ -345,7 +351,9 @@ export default function Hero() {
                 <span
                   key={word.text}
                   aria-hidden="true"
-                  className={`absolute inline-block whitespace-nowrap font-display font-black uppercase leading-[0.85] tracking-wider text-white [font-variation-settings:'wght'_900,'CNTR'_0] ${word.size} ${word.position}`}
+                  // Phones show only the scene, background and scroll cue;
+                  // the h1 keeps its aria-label for screen readers and SEO.
+                  className={`absolute hidden whitespace-nowrap md:inline-block font-display font-black uppercase leading-[0.85] tracking-wider text-white [font-variation-settings:'wght'_900,'CNTR'_0] ${word.size} ${word.position}`}
                 >
                   {word.text.split("").map((char, ci) => (
                     <span
