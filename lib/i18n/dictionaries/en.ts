@@ -24,7 +24,7 @@ export const en = {
   },
   projects: {
     label: "Selected Work",
-    panelLabel: "Project",
+    hoverHint: "Hover for preview",
     items: [
       {
         title: "Utopia",

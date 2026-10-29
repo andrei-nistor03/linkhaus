@@ -14,7 +14,6 @@ import {
   PANEL_WIDTH,
   PANEL_HEIGHT,
   PANEL_DEPTH,
-  PANEL_COUNT,
   type GalleryMetrics,
 } from "@/lib/galleryLayout";
 import type { Project } from "@/components/projects/projectsData";
@@ -22,9 +21,9 @@ import { toDisplayGlyphs } from "@/lib/i18n/displayGlyphs";
 
 interface ProjectPanelProps {
   project: Project;
-  // Caption prefix ("Project 01 / 04"). Passed in rather than read from the
-  // i18n context, since drei's <Html> renders into a separate React root.
-  label: string;
+  // "Hover for preview" line under the caption. Passed in rather than read
+  // from the i18n context, since drei's <Html> renders into a separate React root.
+  hoverHint: string;
   index: number;
   reducedMotion: boolean;
   metrics: GalleryMetrics;
@@ -32,7 +31,7 @@ interface ProjectPanelProps {
 
 const MAX_TILT = 0.16;
 
-export default function ProjectPanel({ project, label, index, reducedMotion, metrics }: ProjectPanelProps) {
+export default function ProjectPanel({ project, hoverHint, index, reducedMotion, metrics }: ProjectPanelProps) {
   const isTouch = useIsTouch();
   const layout = useMemo(() => panelLayout(index, metrics), [index, metrics]);
   const material = useMemo(
@@ -44,7 +43,6 @@ export default function ProjectPanel({ project, label, index, reducedMotion, met
   const outerRef = useRef<THREE.Group>(null);
   const innerRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
-  const captionTopRef = useRef<HTMLDivElement>(null);
   const captionBottomRef = useRef<HTMLDivElement>(null);
 
   const hover = useRef(0);
@@ -101,10 +99,6 @@ export default function ProjectPanel({ project, label, index, reducedMotion, met
 
     const captionOpacity = (0.3 + focusSmooth * 0.6 + hover.current * 0.1) * fade;
     const lift = (1 - focusSmooth) * 6;
-    if (captionTopRef.current) {
-      captionTopRef.current.style.opacity = String(captionOpacity);
-      captionTopRef.current.style.transform = `translateY(${lift}px)`;
-    }
     if (captionBottomRef.current) {
       captionBottomRef.current.style.opacity = String(captionOpacity);
       captionBottomRef.current.style.transform = `translateY(${lift}px)`;
@@ -136,6 +130,11 @@ export default function ProjectPanel({ project, label, index, reducedMotion, met
     setCursorOverride(null);
     setEmphasized(false);
   };
+  const onClick = (e: ThreeEvent<MouseEvent>) => {
+    if (!project.url) return;
+    e.stopPropagation();
+    window.open(project.url, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <group ref={outerRef} position={[layout.position.x, layout.position.y, layout.position.z]}>
@@ -148,6 +147,7 @@ export default function ProjectPanel({ project, label, index, reducedMotion, met
           onPointerMove={isTouch ? undefined : onPointerMove}
           onPointerOver={isTouch ? undefined : onPointerOver}
           onPointerOut={isTouch ? undefined : onPointerOut}
+          onClick={project.url ? onClick : undefined}
         >
           <primitive object={material} attach="material" />
         </RoundedBox>
@@ -166,29 +166,14 @@ export default function ProjectPanel({ project, label, index, reducedMotion, met
       <Html
         center
         distanceFactor={4.6}
-        position={[0, PANEL_HEIGHT / 2 + 0.32, PANEL_DEPTH / 2]}
-        style={{ pointerEvents: "none" }}
-      >
-        <div
-          ref={captionTopRef}
-          aria-hidden="true"
-          // Backdrop blur over a canvas that redraws every frame is re-blurred
-          // every frame; touch devices get a near-opaque pill instead.
-          className={`font-mono-label whitespace-nowrap rounded-full px-3 py-1 text-xs text-ink/70 ${isTouch ? "bg-paper/90" : "bg-paper/70 backdrop-blur-sm"}`}
-        >
-          {label} {project.index} / {String(PANEL_COUNT).padStart(2, "0")}
-        </div>
-      </Html>
-
-      <Html
-        center
-        distanceFactor={4.6}
         position={[0, -PANEL_HEIGHT / 2 - 0.26, PANEL_DEPTH / 2]}
         style={{ pointerEvents: "none" }}
       >
         <div
           ref={captionBottomRef}
           aria-hidden="true"
+          // Backdrop blur over a canvas that redraws every frame is re-blurred
+          // every frame; touch devices get a near-opaque pill instead.
           className={`flex flex-col items-center whitespace-nowrap rounded-2xl px-5 py-3 text-center transition-transform ${isTouch ? "bg-paper/90" : "bg-paper/75 backdrop-blur-sm"} duration-300 ${emphasized ? "scale-[1.04]" : ""}`}
         >
           <span
@@ -199,6 +184,12 @@ export default function ProjectPanel({ project, label, index, reducedMotion, met
           <span className="font-mono-label text-[11px] text-muted">
             {project.tags.join(" / ")} — {project.year}
           </span>
+          {/* Touch has no hover — the preview plays when a panel is centered. */}
+          {!isTouch && (
+            <span className="font-mono-label mt-1.5 text-[10px] uppercase tracking-wider text-ink/50">
+              {hoverHint}
+            </span>
+          )}
         </div>
       </Html>
     </group>

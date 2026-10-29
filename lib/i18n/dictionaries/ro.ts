@@ -22,7 +22,7 @@ export const ro: Dictionary = {
   },
   projects: {
     label: "Proiecte selectate",
-    panelLabel: "Proiect",
+    hoverHint: "Treci cu mouse-ul pentru previzualizare",
     items: [
       {
         title: "Utopia",

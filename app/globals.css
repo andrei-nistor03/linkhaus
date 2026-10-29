@@ -89,25 +89,18 @@ html.has-custom-cursor button {
   color: #f5f3ee;
 }
 
-@keyframes scroll-indicator-drop {
-  0% {
-    top: -15%;
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  80% {
-    opacity: 1;
-  }
+@keyframes scroll-cue-bob {
+  0%,
   100% {
-    top: 100%;
-    opacity: 0;
+    transform: translateY(-4px);
+  }
+  50% {
+    transform: translateY(5px);
   }
 }
-.scroll-indicator-dot {
-  animation: scroll-indicator-drop 1.8s ease-in-out infinite;
-  will-change: transform, opacity;
+.scroll-cue-arrow {
+  animation: scroll-cue-bob 1.6s ease-in-out infinite;
+  will-change: transform;
 }
 
 @supports ((background-clip: text) or (-webkit-background-clip: text)) {

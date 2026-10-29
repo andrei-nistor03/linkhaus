@@ -70,7 +70,7 @@ export default function GalleryScene() {
             <ProjectPanel
               key={project.title}
               project={project}
-              label={dict.projects.panelLabel}
+              hoverHint={dict.projects.hoverHint}
               index={i}
               reducedMotion={reduced}
               metrics={metrics}

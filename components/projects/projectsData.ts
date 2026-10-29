@@ -11,6 +11,8 @@ export interface ProjectMeta {
   // Lighter 960px / 480p versions used by the phone (vertical) layout.
   thumbnailMobile?: string;
   videoMobile?: string;
+  // Live site, opened in a new tab when the panel is clicked.
+  url?: string;
 }
 
 export interface ProjectCopy {
@@ -30,6 +32,7 @@ export const PROJECT_META: ProjectMeta[] = [
     video: "/assets/utopia-portfolio-final-1080p.mp4",
     thumbnailMobile: "/assets/utopia-thumbnail-mobile.webp",
     videoMobile: "/assets/utopia-portfolio-final-mobile.mp4",
+    url: "https://utopiafriedchicken.ro",
   },
   {
     index: "02",
@@ -39,6 +42,7 @@ export const PROJECT_META: ProjectMeta[] = [
     video: "/assets/ecandidat-portfolio.mp4",
     thumbnailMobile: "/assets/ecandidat-thumbnail-mobile.webp",
     videoMobile: "/assets/ecandidat-portfolio-mobile.mp4",
+    url: "https://ecandidat.ro",
   },
   {
     index: "03",
