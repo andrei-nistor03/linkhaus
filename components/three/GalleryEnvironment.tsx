@@ -4,7 +4,14 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Grid, Line } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { PANEL_COUNT, TOTAL_SPAN, HORIZONTAL_METRICS, panelLayout } from "@/lib/galleryLayout";
+import {
+  PANEL_COUNT,
+  TOTAL_SPAN,
+  HORIZONTAL_METRICS,
+  SCENE_INK,
+  SCENE_PAPER,
+  panelLayout,
+} from "@/lib/galleryLayout";
 import { galleryState } from "@/lib/galleryState";
 import { scrollState } from "@/lib/scrollState";
 import { GRID_LINE_COLOR, GRID_MAJOR_COLOR } from "@/lib/gridTheme";
@@ -72,7 +79,7 @@ const DEBRIS_SPEED_MAX = 3.2;
 const DEBRIS_GRAVITY = 3.4;
 const DEBRIS_SCALE_MIN = 0.018;
 const DEBRIS_SCALE_MAX = 0.042;
-const DEBRIS_COLOR = "#ffd9a0";
+const DEBRIS_COLOR = "#d9772b";
 
 const LIGHT_COUNT = 6;
 const LIGHT_DURATION = 0.35;
@@ -190,6 +197,8 @@ export default function GalleryEnvironment({
   const repelsPointer = !reducedMotion && !vertical;
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const flashColor = useMemo(() => new THREE.Color(), []);
+  const paperColor = useMemo(() => new THREE.Color(SCENE_PAPER), []);
+  const emberColor = useMemo(() => new THREE.Color(DEBRIS_COLOR), []);
 
   const dustRef = useRef<THREE.InstancedMesh>(null);
   const moteRef = useRef<THREE.InstancedMesh>(null);
@@ -237,27 +246,26 @@ export default function GalleryEnvironment({
   const flakeMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: "#ffffff",
-        emissive: "#ffffff",
-        emissiveIntensity: 0.45,
+        color: SCENE_INK,
         roughness: 0.6,
         metalness: 0,
         flatShading: true,
         transparent: true,
-        opacity: 0.92,
+        opacity: 0.85,
         toneMapped: false,
       }),
     [],
   );
   const debrisMaterial = useMemo(
     () =>
+      // Tinted per instance: each piece cools from ember back into the paper
+      // colour, since additive sparks wash out against a light backdrop.
       new THREE.MeshBasicMaterial({
-        color: DEBRIS_COLOR,
+        color: "#ffffff",
         transparent: true,
         opacity: 1,
         depthWrite: false,
         toneMapped: false,
-        blending: THREE.AdditiveBlending,
       }),
     [],
   );
@@ -446,13 +454,13 @@ export default function GalleryEnvironment({
           dummy.position.set(d.x, d.y, d.z);
           dummy.rotation.set(p * 6, p * 4.2, 0);
           dummy.scale.set(sc, sc, sc);
-          flashColor.setScalar(Math.max(0, 1 - p));
+          flashColor.lerpColors(emberColor, paperColor, p);
           anyActive = true;
         } else {
           dummy.position.set(d.x, d.y, d.z);
           dummy.rotation.set(0, 0, 0);
           dummy.scale.set(0, 0, 0);
-          flashColor.setScalar(0);
+          flashColor.copy(paperColor);
         }
         dummy.updateMatrix();
         debrisMesh.setMatrixAt(i, dummy.matrix);

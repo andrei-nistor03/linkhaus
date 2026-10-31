@@ -40,7 +40,7 @@ export default function FooterWordmark() {
       data-cursor="link"
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
-      className="inline-flex font-display font-black uppercase leading-[0.85] text-paper [font-variation-settings:'wght'_900,'CNTR'_0] text-[clamp(2.25rem,5.6vw,4.75rem)]"
+      className="inline-flex font-display font-black uppercase leading-[0.85] text-ink [font-variation-settings:'wght'_900,'CNTR'_0] text-[clamp(2.25rem,5.6vw,4.75rem)]"
     >
       {letters.map((char, i) => (
         <span
@@ -53,7 +53,7 @@ export default function FooterWordmark() {
           {char}
         </span>
       ))}
-      <span className="text-accent-blue">.</span>
+      <span className="text-accent-violet">.</span>
     </a>
   );
 }

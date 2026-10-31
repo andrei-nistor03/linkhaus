@@ -86,7 +86,7 @@ html.has-custom-cursor button {
 }
 
 .services-lava-text {
-  color: #f5f3ee;
+  color: #0d0d0d;
 }
 
 @keyframes scroll-cue-bob {
@@ -106,10 +106,10 @@ html.has-custom-cursor button {
 @supports ((background-clip: text) or (-webkit-background-clip: text)) {
   .services-lava-text {
     background-image: radial-gradient(closest-side, #8a5cff, transparent 70%),
-      radial-gradient(closest-side, #ff5a1f, transparent 70%),
+      radial-gradient(closest-side, #ff5fc8, transparent 70%),
       radial-gradient(closest-side, #2b4bff, transparent 70%),
-      radial-gradient(closest-side, #c8ff4d, transparent 70%),
-      linear-gradient(120deg, #8a5cff, #2b4bff 35%, #ff5a1f 65%, #c8ff4d);
+      radial-gradient(closest-side, #5cc8ff, transparent 70%),
+      linear-gradient(120deg, #8a5cff, #2b4bff 35%, #ff5fc8 65%, #5cc8ff);
     background-size:
       60% 160%,
       55% 150%,

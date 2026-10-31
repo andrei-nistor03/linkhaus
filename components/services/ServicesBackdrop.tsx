@@ -3,7 +3,7 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
-import { GRID_LINE_COLOR, GRID_MAJOR_COLOR, GRID_MAJOR_RATIO, hexToRgba } from "@/lib/gridTheme";
+import { GRID_MAJOR_RATIO, hexToRgba } from "@/lib/gridTheme";
 
 interface ServicesBackdropProps {
   activeIndex: number;
@@ -12,10 +12,12 @@ interface ServicesBackdropProps {
 
 const GRID_TILE = 64;
 const GRID_MAJOR_TILE = GRID_TILE * GRID_MAJOR_RATIO;
-const GRID_MINOR_DIM = hexToRgba(GRID_LINE_COLOR, 0.055);
-const GRID_MAJOR_DIM = hexToRgba(GRID_MAJOR_COLOR, 0.1);
-const GRID_MINOR_LIT = hexToRgba(GRID_LINE_COLOR, 0.22);
-const GRID_MAJOR_LIT = hexToRgba(GRID_MAJOR_COLOR, 0.32);
+// The shared grid colours are too pale on paper, so these lines use ink.
+const GRID_INK = "#0d0d0d";
+const GRID_MINOR_DIM = hexToRgba(GRID_INK, 0.28);
+const GRID_MAJOR_DIM = hexToRgba(GRID_INK, 0.48);
+const GRID_MINOR_LIT = hexToRgba(GRID_INK, 0.64);
+const GRID_MAJOR_LIT = hexToRgba(GRID_INK, 0.96);
 
 export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackdropProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -173,13 +175,13 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
         >
           {accents.map((color, i) => (
             <div
-              key={color}
+              key={i}
               ref={(el) => {
                 glowLayerRefs.current[i] = el;
               }}
               className="absolute inset-0 rounded-full"
               style={{
-                background: `radial-gradient(circle, ${color}33 0%, ${color}00 70%)`,
+                background: `radial-gradient(circle, ${color}24 0%, ${color}00 70%)`,
                 opacity: i === activeIndex ? 1 : 0,
               }}
             />
@@ -191,7 +193,7 @@ export default function ServicesBackdrop({ activeIndex, accents }: ServicesBackd
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,243,238,0.05), transparent 60%)",
+            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0.6), transparent 60%)",
         }}
       />
     </div>

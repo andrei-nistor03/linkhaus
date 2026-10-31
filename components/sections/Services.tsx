@@ -14,13 +14,20 @@ import { toDisplayGlyphs } from "@/lib/i18n/displayGlyphs";
 const ACCENTS = SERVICE_CLUSTER_META.map((c) => c.accent);
 
 const LABEL_SCALE_START = 4;
+// Once the label scrolls into the lower part of the screen it plays a timed fly-to-
+// corner (desktop) or settle (mobile) animation — not tied to scroll speed.
+const LABEL_FLY_DURATION = 1.2;
+// Where the label's centre sits (fraction of viewport height, from the top)
+// when the fly starts — it's pinned there, so the corner offset is measured
+// from this point rather than the screen centre.
+const LABEL_TRIGGER_Y = 0.7;
+const LABEL_SETTLE_DURATION = 0.9;
 // Mobile/tablet skip the "fly to corner" pin entirely (there's no room for
-// it) and instead just shrink a little as the section scrolls into view.
+// it) and instead just shrink a little once the section comes into view.
 // This is the scale we'd like to start from; it's capped per-device (see
 // the mobile setup below) so it can never overflow the viewport width.
 const LABEL_SCALE_START_MOBILE = 2.1;
 const LABEL_SCALE_VIEWPORT_MARGIN = 24;
-const LABEL_SETTLE_FRACTION = 0.12;
 // On desktop this label should settle at the same final size as Projects.tsx's
 // "Selected Work" label — mirrors that label's text clamp(1.9rem, 4.4vw, 3.75rem)
 // so the end scale can be computed relative to this label's own (smaller) base size.
@@ -36,6 +43,7 @@ export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
   const labelWrapRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLHeadingElement>(null);
+  const labelFlyRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -126,44 +134,44 @@ export default function Services() {
     const section = sectionRef.current;
     const wrap = labelWrapRef.current;
     const label = labelRef.current;
-    if (!section || !wrap || !label) return;
+    const flyEl = labelFlyRef.current;
+    if (!section || !wrap || !label || !flyEl) return;
 
     // The desired mobile start scale, capped so it can never push the label
     // wider than the viewport (device widths vary a lot more on phones).
     function mobileScaleStart() {
-      const prevTransform = label!.style.transform;
-      label!.style.transform = "none";
-      const width = label!.getBoundingClientRect().width;
-      label!.style.transform = prevTransform;
+      const prevTransform = flyEl!.style.transform;
+      flyEl!.style.transform = "none";
+      const width = flyEl!.getBoundingClientRect().width;
+      flyEl!.style.transform = prevTransform;
       const safeWidth = window.innerWidth - LABEL_SCALE_VIEWPORT_MARGIN * 2;
       const maxScale = width > 0 ? safeWidth / width : LABEL_SCALE_START_MOBILE;
       return Math.max(1, Math.min(LABEL_SCALE_START_MOBILE, maxScale));
     }
 
     if (reducedMotion) {
-      label.style.transform = `scale(${isMobile ? mobileScaleStart() : LABEL_SCALE_START})`;
+      flyEl.style.transform = `scale(${isMobile ? mobileScaleStart() : LABEL_SCALE_START})`;
       return;
     }
 
     let cancelled = false;
     let ctx: gsap.Context | undefined;
-    let tick: (() => void) | undefined;
 
     // Mobile/tablet: no room to fly the label into a corner, so just settle
-    // it from a slightly larger scale down to 1 as the section scrolls in.
+    // it from a slightly larger scale down to 1 once it scrolls into view.
     if (isMobile) {
       const setup = () => {
         if (cancelled) return;
         ctx = gsap.context(() => {
-          gsap.set(label, { scale: mobileScaleStart() });
-          gsap.to(label, {
+          gsap.set(flyEl, { scale: mobileScaleStart() });
+          gsap.to(flyEl, {
             scale: 1,
-            ease: "none",
+            duration: LABEL_SETTLE_DURATION,
+            ease: "expo.out",
             scrollTrigger: {
               trigger: wrap,
               start: "top 85%",
-              end: "top 45%",
-              scrub: true,
+              toggleActions: "play none none reverse",
             },
           });
         }, sectionRef);
@@ -199,10 +207,10 @@ export default function Services() {
     }
 
     function measureCornerOffset() {
-      const prevTransform = label!.style.transform;
-      label!.style.transform = "none";
-      const rect = label!.getBoundingClientRect();
-      label!.style.transform = prevTransform;
+      const prevTransform = flyEl!.style.transform;
+      flyEl!.style.transform = "none";
+      const rect = flyEl!.getBoundingClientRect();
+      flyEl!.style.transform = prevTransform;
 
       const inset = window.innerWidth >= CORNER_INSET_BREAKPOINT ? CORNER_INSET_SM : CORNER_INSET;
       // Use the label's true settled size (natural size * endScale), not its
@@ -211,22 +219,38 @@ export default function Services() {
       const targetCenterY = inset + (rect.height * endScale) / 2;
 
       cornerOffset.x = targetCenterX - window.innerWidth / 2;
-      cornerOffset.y = targetCenterY - window.innerHeight / 2;
+      cornerOffset.y = targetCenterY - window.innerHeight * LABEL_TRIGGER_Y;
     }
 
     function lockWrapHeight() {
       wrap!.style.height = "auto";
-      const prevTransform = label!.style.transform;
-      label!.style.transform = "none";
-      const height = label!.getBoundingClientRect().height;
-      label!.style.transform = prevTransform;
+      const prevTransform = flyEl!.style.transform;
+      flyEl!.style.transform = "none";
+      const height = flyEl!.getBoundingClientRect().height;
+      flyEl!.style.transform = prevTransform;
       wrap!.style.height = `${height}px`;
+    }
+
+    // 0 = big and centred, 1 = docked in the corner. Driven by a timed
+    // tween that the pin trigger plays/reverses, not by scroll position.
+    // It moves the inner span, never the pinned <h2>: ScrollTrigger caches the
+    // pinned element's transform and writes it back on every pin toggle,
+    // which fought the tween and made the label jump.
+    const fly = { progress: 0 };
+
+    function applyFly() {
+      const p = fly.progress;
+      const scale = gsap.utils.interpolate(LABEL_SCALE_START, endScale, p);
+      const tx = gsap.utils.interpolate(0, cornerOffset.x, p);
+      const ty = gsap.utils.interpolate(0, cornerOffset.y, p);
+      flyEl!.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
     }
 
     function remeasure() {
       lockWrapHeight();
       measureEndScale();
       measureCornerOffset();
+      applyFly();
     }
 
     const setup = () => {
@@ -236,42 +260,30 @@ export default function Services() {
         remeasure();
         window.addEventListener("resize", remeasure);
 
-        let progress = 0;
-        // The tick below only needs to run while the section is on screen.
-        let inView = false;
-        ScrollTrigger.create({
-          trigger: section,
-          start: "top bottom",
-          end: "bottom top",
-          onToggle: (self) => {
-            inView = self.isActive;
-          },
+        const flyTween = gsap.to(fly, {
+          progress: 1,
+          duration: LABEL_FLY_DURATION,
+          ease: "power3.inOut",
+          paused: true,
+          onUpdate: applyFly,
         });
+
+        const playFly = () => {
+          measureCornerOffset();
+          flyTween.play();
+        };
+
         ScrollTrigger.create({
           trigger: wrap,
-          start: "center center",
+          start: `center ${LABEL_TRIGGER_Y * 100}%`,
           endTrigger: section,
           end: "bottom top",
           pin: label,
           pinSpacing: false,
-          scrub: true,
-          onEnter: measureCornerOffset,
-          onEnterBack: measureCornerOffset,
-          onUpdate: (self) => {
-            progress = self.progress;
-          },
+          onEnter: playFly,
+          onEnterBack: playFly,
+          onLeaveBack: () => flyTween.reverse(),
         });
-
-        tick = () => {
-          if (!inView) return;
-          const settle = gsap.utils.clamp(0, 1, progress / LABEL_SETTLE_FRACTION);
-          const eased = settle * settle * (3 - 2 * settle);
-          const scale = gsap.utils.interpolate(LABEL_SCALE_START, endScale, eased);
-          const tx = gsap.utils.interpolate(0, cornerOffset.x, eased);
-          const ty = gsap.utils.interpolate(0, cornerOffset.y, eased);
-          label!.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
-        };
-        gsap.ticker.add(tick);
       }, sectionRef);
     };
 
@@ -283,7 +295,6 @@ export default function Services() {
 
     return () => {
       cancelled = true;
-      if (tick) gsap.ticker.remove(tick);
       window.removeEventListener("resize", remeasure);
       ctx?.revert();
     };
@@ -295,7 +306,7 @@ export default function Services() {
     <section
       id="services"
       ref={sectionRef}
-      className="relative overflow-clip bg-ink pb-[36vh] pt-[8vh] sm:pb-[42vh] sm:pt-[32vh]"
+      className="relative overflow-clip bg-paper pb-[36vh] pt-[8vh] sm:pb-[42vh] sm:pt-[32vh]"
     >
       <ServicesBackdrop activeIndex={activeIndex} accents={ACCENTS} />
 
@@ -304,10 +315,11 @@ export default function Services() {
           <div ref={labelWrapRef} className="relative mb-5 sm:mb-6">
             <h2
               ref={labelRef}
-              className="pointer-events-none z-20 mx-auto w-fit text-center font-display text-[clamp(1.5rem,3vw,2.25rem)] font-black uppercase leading-[0.85] tracking-wide text-paper [font-variation-settings:'wght'_900,'CNTR'_0]"
-              style={{ willChange: "transform" }}
+              className="pointer-events-none z-20 mx-auto w-fit text-center font-display text-[clamp(1.5rem,3vw,2.25rem)] font-black uppercase leading-[0.85] tracking-wide text-ink [font-variation-settings:'wght'_900,'CNTR'_0]"
             >
-              <WaveLabel text={toDisplayGlyphs(dict.services.label)} reducedMotion={reducedMotion} />
+              <span ref={labelFlyRef} className="inline-block" style={{ willChange: "transform" }}>
+                <WaveLabel text={toDisplayGlyphs(dict.services.label)} reducedMotion={reducedMotion} />
+              </span>
             </h2>
           </div>
           <h3
@@ -318,7 +330,7 @@ export default function Services() {
           </h3>
           <p
             ref={subtitleRef}
-            className="mx-auto mt-8 max-w-2xl text-balance text-center text-lg leading-relaxed text-paper/55 sm:text-xl"
+            className="mx-auto mt-8 max-w-2xl text-balance text-center text-lg leading-relaxed text-ink/60 sm:text-xl"
           >
             {dict.services.subtitle}
           </p>

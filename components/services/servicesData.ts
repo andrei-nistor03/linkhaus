@@ -18,11 +18,14 @@ export interface ServiceClusterCopy {
 
 export type ServiceClusterData = ServiceClusterMeta & ServiceClusterCopy;
 
+// Every card shares the same accent.
+export const SERVICE_ACCENT = "#8a5cff";
+
 export const SERVICE_CLUSTER_META: ServiceClusterMeta[] = [
-  { index: "01", accent: "#8a5cff" },
-  { index: "02", accent: "#2b4bff" },
-  { index: "03", accent: "#ff5a1f" },
-  { index: "04", accent: "#c8ff4d" },
+  { index: "01", accent: SERVICE_ACCENT },
+  { index: "02", accent: SERVICE_ACCENT },
+  { index: "03", accent: SERVICE_ACCENT },
+  { index: "04", accent: SERVICE_ACCENT },
 ];
 
 export function localizeServiceClusters(copy: ServiceClusterCopy[]): ServiceClusterData[] {

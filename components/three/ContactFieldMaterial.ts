@@ -53,6 +53,10 @@ const fragmentShader =  `
     return v;
   }
 
+  float lobe(vec2 p, vec2 c, float r) {
+    return smoothstep(r, 0.0, length((p - c) * vec2(1.0, 1.2)));
+  }
+
   void main() {
     vec2 uv = vUv - 0.5;
     uv.x *= uAspect;
@@ -65,32 +69,53 @@ const fragmentShader =  `
     );
     float n = fbm(uv * 1.05 + warp * 0.55 + t * 0.015);
 
-    vec2 c1 = vec2(sin(t * 0.11) * 0.34, cos(t * 0.085) * 0.22 - 0.04);
-    vec2 c2 = vec2(cos(t * 0.07 + 2.0) * 0.38, sin(t * 0.09 + 1.4) * 0.26 + 0.14);
-    float d1 = length((uv - c1) * vec2(1.0, 1.3));
-    float d2 = length((uv - c2) * vec2(1.0, 1.3));
-    float blob1 = smoothstep(0.62, 0.0, d1);
-    float blob2 = smoothstep(0.55, 0.0, d2);
+    // Five lobes, each drifting within its own region of the frame (corners
+    // and centre), sampled through the warped coords so their edges smoke
+    // out and merge into one sheet that spans the whole section.
+    vec2 wuv = uv + warp * 0.35;
+    float hw = 0.5 * uAspect;
+    vec2 c1 = vec2(-hw * 0.55 + sin(t * 0.11) * 0.18, 0.18 + cos(t * 0.085) * 0.1);
+    vec2 c2 = vec2(hw * 0.55 + cos(t * 0.07 + 2.0) * 0.2, -0.16 + sin(t * 0.09 + 1.4) * 0.12);
+    vec2 c3 = vec2(sin(t * 0.05 + 0.7) * hw * 0.35, cos(t * 0.06 + 3.1) * 0.12);
+    vec2 c4 = vec2(-hw * 0.6 + cos(t * 0.08 + 4.0) * 0.15, -0.32 + sin(t * 0.1) * 0.08);
+    vec2 c5 = vec2(hw * 0.6 + sin(t * 0.065 + 5.2) * 0.15, 0.32 + cos(t * 0.075 + 0.9) * 0.08);
 
-    vec3 ink = vec3(0.051, 0.051, 0.051);
-    vec3 violet = vec3(0.541, 0.361, 1.0);
-    vec3 deepViolet = vec3(0.11, 0.05, 0.24);
+    float lobes = 1.0;
+    lobes *= 1.0 - lobe(wuv, c1, 0.78);
+    lobes *= 1.0 - lobe(wuv, c2, 0.78);
+    lobes *= 1.0 - lobe(wuv, c3, 0.7);
+    lobes *= 1.0 - lobe(wuv, c4, 0.62);
+    lobes *= 1.0 - lobe(wuv, c5, 0.62);
+    lobes = 1.0 - lobes;
+
     vec3 paper = vec3(0.961, 0.953, 0.933);
+    vec3 violet = vec3(0.541, 0.361, 1.0);
+    vec3 lilac = vec3(0.80, 0.72, 1.0);
+    vec3 deepViolet = vec3(0.36, 0.20, 0.85);
+    vec3 shade = vec3(0.89, 0.875, 0.85);
 
-    vec3 col = ink;
-    col = mix(col, deepViolet, blob1 * 0.9 + blob2 * 0.7);
-    col += violet * (blob1 * 0.5 + blob2 * 0.35) * (0.4 + n * 0.6);
-    col += violet * 0.05 * n;
+    // Light theme: a dense violet cloud on paper. Noise thins it into
+    // pockets and wisps so the full-frame sheet never reads as a flat fill.
+    float cloud = lobes * (0.6 + n * 0.6);
+    cloud = max(cloud, smoothstep(0.0, 0.6, n) * 0.5);
+    cloud = smoothstep(0.05, 0.85, cloud);
+    float core = smoothstep(0.35, 1.0, cloud) * (0.55 + n * 0.45);
+
+    vec3 col = paper;
+    col = mix(col, lilac, cloud * 0.95);
+    col = mix(col, violet, cloud * 0.55);
+    col = mix(col, deepViolet, core * 0.45);
+    col = mix(col, violet, 0.05 * n);
 
     vec2 pUv = uPointer * vec2(uAspect, 1.0) * 0.5;
     float pd = length(uv - pUv);
-    float pointerGlow = smoothstep(0.55, 0.0, pd) * (0.2 + uHover * 0.55);
-    col += paper * pointerGlow;
+    float pointerGlow = smoothstep(0.55, 0.0, pd) * (0.12 + uHover * 0.3);
+    col = mix(col, violet, pointerGlow);
 
-    col = mix(ink, col, clamp(uIntensity, 0.0, 1.0));
+    col = mix(paper, col, clamp(uIntensity, 0.0, 1.0));
 
     float vig = smoothstep(0.95, 0.25, length(uv * vec2(1.0, 1.15)));
-    col *= mix(0.55, 1.0, vig);
+    col = mix(shade, col, mix(0.75, 1.0, vig));
 
     gl_FragColor = vec4(col, 1.0);
   }

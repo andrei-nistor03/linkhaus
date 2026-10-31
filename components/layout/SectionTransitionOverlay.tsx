@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { gsap, registerGsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 import { lenisState } from "@/lib/lenisState";
 import { setNavTransitionHandler } from "@/lib/navTransitionState";
@@ -12,6 +12,9 @@ const FILL_DURATION = 0.55;
 const REVEAL_DELAY = 0.15;
 
 const CONTACT_SETTLE_SCROLL = 300;
+// On touch the nav lands deep into Contact's sticky scroll range, just before
+// its content starts fading out (CONTENT_FADE_FROM = 0.82 in Contact.tsx).
+const CONTACT_TOUCH_LANDING = 0.7;
 
 export default function SectionTransitionOverlay() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -49,19 +52,33 @@ export default function SectionTransitionOverlay() {
     const root = rootRef.current;
     if (!root) return;
 
-    document.documentElement.style.overflow = "hidden";
     const lenis = lenisState.instance;
-    lenis?.stop();
+    // lenis.stop() already blocks scrolling. Locking the root's overflow would
+    // make <html> the scrollport and un-stick Contact's sticky panel, so it's
+    // only a fallback for when Lenis isn't running.
+    if (lenis) lenis.stop();
+    else document.documentElement.style.overflow = "hidden";
 
     const jump = () => {
       const target = targetRef.current;
       if (!target) return;
-      if (lenis) {
-        lenis.scrollTo(target, { immediate: true, force: true });
-      } else {
-        const el = document.querySelector(target);
-        el?.scrollIntoView();
+      const el = document.querySelector<HTMLElement>(target);
+      if (!el) return;
+      // Measure against the real window scroll: after a native touch fling,
+      // Lenis's own scroll value can lag behind, which made element targets
+      // land short. Contact also goes straight past its transition veil.
+      let top = el.getBoundingClientRect().top + window.scrollY;
+      if (target === "#contact") {
+        top += isTouch
+          ? (el.offsetHeight - window.innerHeight) * CONTACT_TOUCH_LANDING
+          : CONTACT_SETTLE_SCROLL;
       }
+      if (lenis) {
+        lenis.scrollTo(top, { immediate: true, force: true });
+      } else {
+        window.scrollTo(0, top);
+      }
+      ScrollTrigger.update();
     };
 
     const tl = gsap.timeline();
@@ -112,22 +129,17 @@ export default function SectionTransitionOverlay() {
     }
 
     tl.eventCallback("onComplete", () => {
-      const target = targetRef.current;
       lenis?.start();
       document.documentElement.style.overflow = "";
       inFlightRef.current = false;
       targetRef.current = null;
       setActive(false);
-
-      if (target === "#contact" && lenis) {
-        lenis.scrollTo(lenis.scroll + CONTACT_SETTLE_SCROLL);
-      }
     });
 
     return () => {
       tl.kill();
     };
-  }, [active]);
+  }, [active, isTouch]);
 
   if (!active) return null;
 

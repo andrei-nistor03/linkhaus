@@ -104,7 +104,7 @@ export default function Footer() {
     <footer
       id="footer"
       ref={sectionRef}
-      className="relative overflow-hidden border-t border-paper/10 bg-ink px-5 pb-6 pt-14 text-paper sm:px-8 sm:pb-8 sm:pt-16"
+      className="relative overflow-hidden border-t border-line bg-paper px-5 pb-6 pt-14 text-ink sm:px-8 sm:pb-8 sm:pt-16"
     >
       <FooterBackdrop />
 
@@ -128,7 +128,7 @@ export default function Footer() {
                 cursor="link"
                 className="group inline-flex w-fit"
               >
-                <span className="relative font-display text-lg text-paper/80 transition-colors duration-300 ease-art [font-variation-settings:'wght'_500,'CNTR'_0] group-hover:text-paper sm:text-xl">
+                <span className="relative font-display text-lg text-ink/85 transition-colors duration-300 ease-art [font-variation-settings:'wght'_500,'CNTR'_0] group-hover:text-accent-violet sm:text-xl">
                   {EMAIL}
                   <span className="absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-accent-violet transition-transform duration-300 ease-art group-hover:scale-x-100" />
                 </span>
@@ -141,16 +141,16 @@ export default function Footer() {
                 cursor="link"
                 className="group inline-flex w-fit"
               >
-                <span className="relative font-mono-label text-xs text-paper/45 transition-colors duration-300 ease-art group-hover:text-paper/80">
+                <span className="relative font-mono-label text-xs text-ink/50 transition-colors duration-300 ease-art group-hover:text-ink">
                   {PHONE_DISPLAY}
-                  <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-paper/50 transition-transform duration-300 ease-art group-hover:scale-x-100" />
+                  <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-accent-violet/60 transition-transform duration-300 ease-art group-hover:scale-x-100" />
                 </span>
               </MagneticButton>
             </div>
 
             <div
               ref={metaRef}
-              className="mt-6 font-mono-label text-[11px] leading-relaxed text-paper/35 sm:mt-8"
+              className="mt-6 font-mono-label text-[11px] leading-relaxed text-muted sm:mt-8"
               style={{ willChange: "transform, opacity" }}
             >
               {dict.footer.metaLines[0]}
@@ -184,15 +184,15 @@ export default function Footer() {
           </div>
         </div>
 
-        <div ref={dividerRef} className="mt-8 h-px w-full origin-left bg-paper/10 sm:mt-10" />
+        <div ref={dividerRef} className="mt-8 h-px w-full origin-left bg-line sm:mt-10" />
 
         <div
           ref={bottomRowRef}
           className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
           style={{ willChange: "transform, opacity" }}
         >
-          <div className="font-mono-label flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-paper/30">
-            <span>&copy; 2026 LINKHAUS</span>
+          <div className="font-mono-label flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-ink/40">
+            <span>&copy; 2026 LINKHAUS<span className="text-accent-violet">.</span></span>
             <span aria-hidden="true">/</span>
             {STACK.map((tech, i) => (
               <span key={tech} className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export default function Footer() {
             href="#top"
             onClick={(e) => handleSectionLink(e, "#top")}
             data-cursor="link"
-            className="group inline-flex w-fit items-center gap-2 font-mono-label text-xs text-paper/50 transition-colors duration-300 ease-art hover:text-paper"
+            className="group inline-flex w-fit items-center gap-2 font-mono-label text-xs text-ink/55 transition-colors duration-300 ease-art hover:text-accent-violet"
           >
             {dict.footer.backToTop}
             <span className="inline-block transition-transform duration-300 ease-art group-hover:-translate-y-1">

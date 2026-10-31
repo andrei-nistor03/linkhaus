@@ -10,6 +10,9 @@ interface TransitionVeilProps {
 }
 
 const TRIGGER_START = "top 90%";
+// Phones reach the end of Services' content sooner relative to the viewport,
+// so the veil starts while the section is still just below the fold.
+const TRIGGER_START_TOUCH = "top 120%";
 const TRIGGER_END = "top 1%";
 
 export default function TransitionVeil({
@@ -56,7 +59,7 @@ export default function TransitionVeil({
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
-          start: TRIGGER_START,
+          start: blurs ? TRIGGER_START : TRIGGER_START_TOUCH,
           end: TRIGGER_END,
           scrub: 0.4,
         },
@@ -118,11 +121,11 @@ export default function TransitionVeil({
       ref={rootRef}
       className="pointer-events-none fixed inset-0 z-30 overflow-hidden"
     >
-      <div ref={washRef} className="absolute inset-0 bg-ink" />
+      <div ref={washRef} className="absolute inset-0 bg-paper" />
       <div className="absolute inset-0 flex items-center justify-center px-6">
         <span
           ref={textRef}
-          className="font-display font-black uppercase leading-none tracking-wide text-paper [font-variation-settings:'wght'_900,'CNTR'_0] text-[clamp(2.5rem,9vw,7rem)]"
+          className="font-display font-black uppercase leading-none tracking-wide text-ink [font-variation-settings:'wght'_900,'CNTR'_0] text-[clamp(2.5rem,9vw,7rem)]"
           style={{ willChange: "transform, opacity" }}
         >
           CONTACT

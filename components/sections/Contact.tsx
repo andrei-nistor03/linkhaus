@@ -177,7 +177,7 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" ref={sectionRef} className="relative bg-ink">
+    <section id="contact" ref={sectionRef} className="relative bg-paper">
       <TransitionVeil sectionRef={sectionRef} reducedMotion={reducedMotion} />
 
       <div className="sticky top-0 h-screen w-full overflow-hidden">
@@ -187,7 +187,7 @@ export default function Contact() {
               className="absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(ellipse 70% 55% at 50% 38%, #23163f, #0d0d0d 68%)",
+                  "radial-gradient(ellipse 70% 55% at 50% 38%, #e6dcff, #f5f3ee 68%)",
               }}
             />
           }
@@ -200,11 +200,11 @@ export default function Contact() {
           className="relative z-20 flex h-full w-full flex-col items-center justify-center px-5 text-center sm:px-8"
           style={{ willChange: "opacity, transform" }}
         >
-          <p ref={eyebrowRef} className="font-mono-label mb-4 text-xs text-paper/50 sm:mb-6">
+          <p ref={eyebrowRef} className="font-mono-label mb-4 text-xs text-ink/50 sm:mb-6">
             <WaveLabel text={dict.contact.eyebrow} reducedMotion={reducedMotion} />
           </p>
 
-          <h2 className="max-w-5xl font-display font-black uppercase leading-[0.92] text-paper [font-variation-settings:'wght'_900,'CNTR'_0]">
+          <h2 className="max-w-5xl font-display font-black uppercase leading-[0.92] text-ink [font-variation-settings:'wght'_900,'CNTR'_0]">
             {dict.contact.titleLines.map((line, i) => (
               <span key={line} className="mask-line">
                 <span
@@ -222,7 +222,7 @@ export default function Contact() {
 
           <p
             ref={subtitleRef}
-            className="mx-auto mt-5 max-w-xl text-balance text-base leading-relaxed text-paper/55 sm:mt-7 sm:text-xl"
+            className="mx-auto mt-5 max-w-xl text-balance text-base leading-relaxed text-ink/60 sm:mt-7 sm:text-xl"
           >
             {dict.contact.subtitle}
           </p>
@@ -231,25 +231,38 @@ export default function Contact() {
             ref={ctaRef}
             onMouseEnter={onCtaEnter}
             onMouseLeave={onCtaLeave}
-            className="mt-8 flex flex-col items-center gap-4 sm:mt-12 sm:gap-6"
+            className="mt-8 flex w-full max-w-sm flex-col items-stretch gap-3 sm:mt-12 sm:w-auto sm:max-w-none sm:items-center sm:gap-6"
           >
+            {/* Below sm the links become pill buttons; hover effects are sm-only
+                so a tap doesn't leave them stuck in their hover state. */}
             <MagneticButton
               href={`mailto:${EMAIL}`}
               radius={140}
               strength={0.14}
               cursor="link"
-              className="group inline-flex"
+              className="group flex justify-center rounded-full bg-ink px-6 py-4 text-paper transition-transform duration-200 active:scale-[0.97] sm:inline-flex sm:rounded-none sm:bg-transparent sm:p-0 sm:text-ink sm:active:scale-100"
             >
-              <span className="relative inline-block font-display font-black lowercase text-paper transition-transform duration-500 ease-art [font-variation-settings:'wght'_800,'CNTR'_0] text-[clamp(1.5rem,4.4vw,3.4rem)] group-hover:-skew-x-2 group-hover:scale-[1.015]">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="shrink-0 sm:hidden"
+              >
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M3.5 6.5 12 13l8.5-6.5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+              </svg>
+              <span className="relative inline-block font-display font-black lowercase transition-transform duration-500 ease-art [font-variation-settings:'wght'_800,'CNTR'_0] text-[1.15rem] sm:text-[clamp(1.5rem,4.4vw,3.4rem)] sm:group-hover:-skew-x-2 sm:group-hover:scale-[1.015]">
                 {EMAIL}
-                <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-accent-violet transition-transform duration-500 ease-art group-hover:scale-x-100 sm:-bottom-2" />
+                <span className="absolute -bottom-1 left-0 hidden h-px w-full origin-left scale-x-0 bg-accent-violet transition-transform duration-500 ease-art sm:-bottom-2 sm:block sm:group-hover:scale-x-100" />
                 <svg
                   width="28"
                   height="28"
                   viewBox="0 0 24 24"
                   fill="none"
                   aria-hidden="true"
-                  className="absolute left-full top-1/2 ml-2 -translate-x-2 -translate-y-1/2 text-paper opacity-0 transition-all duration-500 ease-art group-hover:translate-x-0 group-hover:opacity-100 sm:ml-3 sm:h-9 sm:w-9"
+                  className="absolute left-full top-1/2 ml-3 hidden h-9 w-9 -translate-x-2 -translate-y-1/2 text-ink opacity-0 transition-all duration-500 ease-art sm:block sm:group-hover:translate-x-0 sm:group-hover:opacity-100"
                 >
                   <path
                     d="M5 12h14M13 6l6 6-6 6"
@@ -268,11 +281,26 @@ export default function Contact() {
               strength={0.12}
               layered={false}
               cursor="link"
-              className="group inline-flex"
+              className="group flex justify-center rounded-full border border-ink/25 bg-paper/60 px-6 py-4 text-ink backdrop-blur-sm transition-transform duration-200 active:scale-[0.97] sm:inline-flex sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none sm:active:scale-100"
             >
-              <span className="relative inline-block font-display font-semibold text-paper/70 transition-colors duration-500 ease-art [font-variation-settings:'wght'_600,'CNTR'_0] text-[clamp(1rem,2.2vw,1.5rem)] group-hover:text-paper">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="shrink-0 sm:hidden"
+              >
+                <path
+                  d="M6.6 3.5h2.6l1.4 4-2 1.3a11 11 0 0 0 6.6 6.6l1.3-2 4 1.4v2.6a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2Z"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="relative inline-block font-display font-semibold text-ink transition-colors duration-500 ease-art [font-variation-settings:'wght'_600,'CNTR'_0] text-[1.15rem] sm:text-[clamp(1rem,2.2vw,1.5rem)] sm:text-ink/70 sm:group-hover:text-ink">
                 {PHONE_DISPLAY}
-                <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-paper/50 transition-transform duration-500 ease-art group-hover:scale-x-100" />
+                <span className="absolute -bottom-1 left-0 hidden h-px w-full origin-left scale-x-0 bg-ink/50 transition-transform duration-500 ease-art sm:block sm:group-hover:scale-x-100" />
               </span>
             </MagneticButton>
           </div>
@@ -283,8 +311,8 @@ export default function Contact() {
 
       <div className="relative z-20 flex flex-col items-center px-5 pb-[14vh] text-center sm:px-8 sm:pb-[18vh]">
         <div ref={taglineRef} className="flex items-center gap-2.5">
-          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-accent-acid" />
-          <span className="font-mono-label text-xs text-paper/55 sm:text-sm">
+          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-accent-violet" />
+          <span className="font-mono-label text-xs text-ink/60 sm:text-sm">
             {dict.contact.availability}
           </span>
         </div>

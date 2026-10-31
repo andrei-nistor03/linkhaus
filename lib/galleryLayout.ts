@@ -55,7 +55,7 @@ export function trackOffset(progress: number, m: GalleryMetrics) {
 export const GALLERY_SCROLL_TRIGGER_ID = "gallery-scroll";
 
 export const SCENE_PAPER = "#f5f3ee";
-export const SCENE_DARK = "#0d0d0d";
+export const SCENE_INK = "#0d0d0d";
 export const ENTRY_FADE_FRACTION = 0.08;
 
 export interface PanelLayout {

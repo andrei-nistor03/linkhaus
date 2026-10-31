@@ -67,14 +67,14 @@ export default function ServiceCard({
         <div ref={shadeRef} className="svc-shade" aria-hidden="true" />
 
         <header>
-          <div className="font-mono-label flex items-center gap-3 text-[10px] text-paper/40">
-            <span className="text-paper">{data.index}</span>
+          <div className="font-mono-label flex items-center gap-3 text-[10px] text-ink/40">
+            <span className="text-ink">{data.index}</span>
             <span>/ {pad(total)}</span>
             <span className="h-px w-8" style={{ backgroundColor: data.accent }} />
           </div>
           <h3
             id={titleId}
-            className="mt-2 font-display text-[clamp(1.65rem,min(4.4vw,6.2vh),3.75rem)] font-black uppercase leading-[0.9] text-paper [font-variation-settings:'wght'_800,'CNTR'_0]"
+            className="mt-2 font-display text-[clamp(1.65rem,min(4.4vw,6.2vh),3.75rem)] font-black uppercase leading-[0.9] text-ink [font-variation-settings:'wght'_800,'CNTR'_0]"
           >
             {toDisplayGlyphs(data.title)}
           </h3>
@@ -102,7 +102,7 @@ export default function ServiceCard({
                       <span className="svc-item-title">{item.title}</span>
                       <span className="svc-item-body">
                         <span className="overflow-hidden">
-                          <span className="block max-w-md pt-2.5 text-sm leading-relaxed text-paper/55">
+                          <span className="block max-w-md pt-2.5 text-sm leading-relaxed text-ink">
                             {item.description ?? item.detail}
                           </span>
                         </span>
@@ -140,16 +140,16 @@ export default function ServiceCard({
                   );
                 })}
               </div>
-              <span className="font-mono-label text-[10px] text-paper/40">
-                <span className="text-paper">{pad(step + 1)}</span> / {pad(data.items.length)}
+              <span className="font-mono-label text-[10px] text-ink/40">
+                <span className="text-ink">{pad(step + 1)}</span> / {pad(data.items.length)}
               </span>
             </div>
 
             <div className="svc-pager mt-2.5" aria-live="polite">
               {data.items.map((item, i) => (
                 <div key={item.title} data-active={i === step} aria-hidden={i !== step}>
-                  <div className="text-[1.05rem] font-medium leading-snug text-paper sm:text-xl">{item.title}</div>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-paper/55 sm:text-[15px]">
+                  <div className="text-[1.05rem] font-medium leading-snug text-ink sm:text-xl">{item.title}</div>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-ink sm:text-[15px]">
                     {item.description ?? item.detail}
                   </p>
                 </div>

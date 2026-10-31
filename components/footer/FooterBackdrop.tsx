@@ -55,11 +55,16 @@ export default function FooterBackdrop() {
 
   return (
     <div ref={rootRef} className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="absolute -bottom-1/2 -right-1/4 h-[120%] w-[70%] rounded-full opacity-[0.14] blur-3xl"
+        style={{ background: "radial-gradient(closest-side, #8a5cff, transparent)" }}
+      />
       <div ref={motesRef} className="absolute inset-0">
         {motes.map((m, i) => (
           <span
             key={i}
-            className="footer-mote absolute rounded-full bg-paper"
+            className="footer-mote absolute rounded-full bg-accent-violet/50"
             style={{
               left: `${m.left}%`,
               top: `${m.top}%`,

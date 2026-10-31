@@ -23,9 +23,9 @@ export default function FooterLink({ href, label, external, onClick }: FooterLin
       cursor="link"
       className="group inline-flex w-fit"
     >
-      <span className="relative font-mono-label text-sm text-paper/55 transition-colors duration-300 ease-art group-hover:text-paper sm:text-base">
+      <span className="relative font-mono-label text-sm text-ink/60 transition-colors duration-300 ease-art group-hover:text-ink sm:text-base">
         {label}
-        <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-paper/60 transition-transform duration-300 ease-art group-hover:scale-x-100" />
+        <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-accent-violet transition-transform duration-300 ease-art group-hover:scale-x-100" />
       </span>
       <svg
         width="14"
@@ -33,7 +33,7 @@ export default function FooterLink({ href, label, external, onClick }: FooterLin
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
-        className="shrink-0 -translate-x-1.5 text-paper/70 opacity-0 transition-all duration-300 ease-art group-hover:translate-x-0 group-hover:opacity-100"
+        className="shrink-0 -translate-x-1.5 text-accent-violet opacity-0 transition-all duration-300 ease-art group-hover:translate-x-0 group-hover:opacity-100"
       >
         <path
           d="M5 12h14M13 6l6 6-6 6"

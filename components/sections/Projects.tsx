@@ -25,12 +25,9 @@ const GalleryScene = dynamic(() => import("@/components/three/GalleryScene"), {
 
 const COUNT = PROJECT_META.length;
 
-const LABEL_COLOR_FROM = "rgba(13,13,13,0.8)";
-const LABEL_COLOR_TO = "rgba(245,243,238,0.92)";
-const RAIL_TRACK_FROM = "rgba(13,13,13,0.1)";
-const RAIL_TRACK_TO = "rgba(245,243,238,0.18)";
-const RAIL_FILL_FROM = "rgba(13,13,13,0.7)";
-const RAIL_FILL_TO = "rgba(245,243,238,0.85)";
+const LABEL_COLOR = "rgba(13,13,13,0.8)";
+const RAIL_TRACK_COLOR = "rgba(13,13,13,0.1)";
+const RAIL_FILL_COLOR = "rgba(13,13,13,0.7)";
 
 const TITLE_SCALE_START = 3.2;
 const TITLE_SETTLE_FRACTION = 0.12;
@@ -58,7 +55,6 @@ const MOBILE_LABEL_TOP_GAP = 18;
 export default function Projects() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
-  const railTrackRef = useRef<HTMLDivElement>(null);
   const railFillRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLHeadingElement>(null);
   const indexLabelRef = useRef<HTMLSpanElement>(null);
@@ -146,6 +142,11 @@ export default function Projects() {
             galleryState.progress = self.progress;
             galleryState.velocity = gsap.utils.clamp(-1, 1, self.getVelocity() / 2500);
           },
+          // onUpdate stops firing once the scrub settles, so without this the
+          // last velocity it saw stayed stuck and the camera stayed punched in.
+          onScrubComplete: () => {
+            galleryState.velocity = 0;
+          },
         },
       });
     }, wrapperRef);
@@ -166,13 +167,9 @@ export default function Projects() {
         indexLabelRef.current.textContent = label;
       }
 
-      const fade = gsap.utils.clamp(0, 1, p / ENTRY_FADE_FRACTION);
-      if (labelRef.current) labelRef.current.style.color = gsap.utils.interpolate(LABEL_COLOR_FROM, LABEL_COLOR_TO, fade);
-      if (indexLabelRef.current) indexLabelRef.current.style.color = gsap.utils.interpolate(LABEL_COLOR_FROM, LABEL_COLOR_TO, fade);
-      if (railTrackRef.current) railTrackRef.current.style.backgroundColor = gsap.utils.interpolate(RAIL_TRACK_FROM, RAIL_TRACK_TO, fade);
-      if (railFillRef.current) railFillRef.current.style.backgroundColor = gsap.utils.interpolate(RAIL_FILL_FROM, RAIL_FILL_TO, fade);
       // The vertical stack scrolls panels up through the header, so the scrim
-      // fades in with the dark scene to keep the label readable over them.
+      // fades in once the gallery starts moving to keep the label readable.
+      const fade = gsap.utils.clamp(0, 1, p / ENTRY_FADE_FRACTION);
       if (topScrimRef.current) topScrimRef.current.style.opacity = String(fade);
 
       if (isMobile && navElRef.current) {
@@ -227,7 +224,7 @@ export default function Projects() {
         {isMobile && (
           <div
             ref={topScrimRef}
-            className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-44 bg-gradient-to-b from-[#0d0d0d] via-[#0d0d0d]/70 to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-44 bg-gradient-to-b from-paper via-paper/70 to-transparent"
             style={{ opacity: 0 }}
           />
         )}
@@ -236,14 +233,14 @@ export default function Projects() {
           <h2
             ref={labelRef}
             className="font-display font-black uppercase leading-[0.85] tracking-wide [font-variation-settings:'wght'_900,'CNTR'_0] text-[clamp(1.9rem,4.4vw,3.75rem)]"
-            style={{ color: LABEL_COLOR_FROM, willChange: "transform" }}
+            style={{ color: LABEL_COLOR, willChange: "transform" }}
           >
             <WaveLabel text={toDisplayGlyphs(dict.projects.label)} reducedMotion={reducedMotion} />
           </h2>
           <span
             ref={indexLabelRef}
             className="font-mono-label pt-2 text-xs"
-            style={{ color: LABEL_COLOR_FROM }}
+            style={{ color: LABEL_COLOR }}
           >
             01 / {String(COUNT).padStart(2, "0")}
           </span>
@@ -260,15 +257,15 @@ export default function Projects() {
         </ul>
 
         {/* The horizontal progress rail only matches the desktop rail layout;
-            under the dark vertical stack it just reads as a stray white line,
+            under the vertical stack it just reads as a stray line,
             so mobile relies on the index counter alone. */}
         {!isMobile && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-5 pb-7 sm:px-8">
-            <div ref={railTrackRef} className="relative h-px w-full" style={{ backgroundColor: RAIL_TRACK_FROM }}>
+            <div className="relative h-px w-full" style={{ backgroundColor: RAIL_TRACK_COLOR }}>
               <div
                 ref={railFillRef}
                 className="absolute inset-y-0 left-0 h-px w-full origin-left"
-                style={{ transform: "scaleX(0)", backgroundColor: RAIL_FILL_FROM }}
+                style={{ transform: "scaleX(0)", backgroundColor: RAIL_FILL_COLOR }}
               />
             </div>
           </div>

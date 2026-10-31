@@ -6,7 +6,6 @@ import { Environment, Lightformer, PerspectiveCamera } from "@react-three/drei";
 import WallsModel from "./WallsModel";
 import PulsatingLight from "./PulsatingLight";
 import CameraRig from "./CameraRig";
-import PointerTracker from "./PointerTracker";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 import { useInView } from "@/lib/useInView";
 
@@ -60,7 +59,6 @@ export default function HeroScene() {
       </Suspense>
 
       <CameraRig />
-      <PointerTracker />
     </Canvas>
   );
 }

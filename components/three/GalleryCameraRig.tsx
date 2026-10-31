@@ -13,6 +13,7 @@ const BASE_FOV = 32;
 
 const FIT_PANEL_WIDTH = PANEL_WIDTH * 1.18;
 const HALF_FOV_RAD = THREE.MathUtils.degToRad(BASE_FOV / 2);
+const VELOCITY_EASE = 3;
 
 export default function GalleryCameraRig({
   reducedMotion,
@@ -27,11 +28,17 @@ export default function GalleryCameraRig({
   const camera = useThree((state) => state.camera) as THREE.PerspectiveCamera;
   const lookTarget = useRef(new THREE.Vector3());
   const t = useRef(0);
+  const velocitySmooth = useRef(0);
 
   useFrame((state, rawDelta) => {
     const delta = Math.min(rawDelta, 1 / 30);
     t.current += delta;
-    const velocity = THREE.MathUtils.clamp(galleryState.velocity, -1, 1);
+    // The raw scroll velocity spikes on any long frame; fed straight into the
+    // FOV it made the whole scene zoom-pop, which read as the gallery
+    // teleporting forward or back.
+    const rawVelocity = THREE.MathUtils.clamp(galleryState.velocity, -1, 1);
+    velocitySmooth.current += (rawVelocity - velocitySmooth.current) * Math.min(1, delta * VELOCITY_EASE);
+    const velocity = velocitySmooth.current;
     const still = reducedMotion || vertical;
     const p = scrollState.pointerEased;
 

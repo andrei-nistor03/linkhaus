@@ -17,12 +17,12 @@ function makeBackdropTexture() {
   const c = size / 2;
 
   const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
-  gradient.addColorStop(0, "#e4d3ff");
-  gradient.addColorStop(0.14, "#9d6bff");
-  gradient.addColorStop(0.3, "#8a5cff");
-  gradient.addColorStop(0.48, "#3a1785");
-  gradient.addColorStop(0.65, "rgba(20, 10, 45, 0)");
-  gradient.addColorStop(1, "rgba(20, 10, 45, 0)");
+  gradient.addColorStop(0, "rgba(157, 107, 255, 0.9)");
+  gradient.addColorStop(0.14, "rgba(157, 107, 255, 0.75)");
+  gradient.addColorStop(0.3, "rgba(138, 92, 255, 0.5)");
+  gradient.addColorStop(0.48, "rgba(138, 92, 255, 0.18)");
+  gradient.addColorStop(0.65, "rgba(138, 92, 255, 0)");
+  gradient.addColorStop(1, "rgba(138, 92, 255, 0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
 
@@ -52,10 +52,10 @@ function makeRaysTexture() {
     ctx.rotate(angle);
 
     const grad = ctx.createLinearGradient(0, 0, 0, -length);
-    grad.addColorStop(0, "rgba(228, 211, 255, 0.85)");
-    grad.addColorStop(0.25, "rgba(138, 92, 255, 0.5)");
-    grad.addColorStop(0.65, "rgba(58, 23, 133, 0.18)");
-    grad.addColorStop(1, "rgba(58, 23, 133, 0)");
+    grad.addColorStop(0, "rgba(157, 107, 255, 0.7)");
+    grad.addColorStop(0.25, "rgba(138, 92, 255, 0.4)");
+    grad.addColorStop(0.65, "rgba(138, 92, 255, 0.12)");
+    grad.addColorStop(1, "rgba(138, 92, 255, 0)");
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -98,7 +98,7 @@ export default function PanelGlow({
   const layout = useMemo(() => panelLayout(index, metrics), [index, metrics]);
   // Stacked vertically the panels sit much closer together, so the halos
   // are pulled in to keep them reading as one glow per panel instead of a
-  // single additive smear down the column.
+  // single smear down the column.
   const haloScale = metrics.vertical ? 0.64 : 1;
   const groupRef = useRef<THREE.Group>(null);
   const material = useRef<THREE.MeshBasicMaterial>(null);
@@ -155,7 +155,6 @@ export default function PanelGlow({
             depthWrite={false}
             toneMapped={false}
             fog={false}
-            blending={THREE.AdditiveBlending}
             opacity={0.2}
           />
         </mesh>
@@ -170,7 +169,6 @@ export default function PanelGlow({
             depthWrite={false}
             toneMapped={false}
             fog={false}
-            blending={THREE.AdditiveBlending}
             opacity={0.32}
           />
         </mesh>

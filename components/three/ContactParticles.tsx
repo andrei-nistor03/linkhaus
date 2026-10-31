@@ -22,8 +22,8 @@ function makeDotTexture() {
   const ctx = canvas.getContext("2d")!;
   const c = size / 2;
   const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
-  gradient.addColorStop(0, "rgba(245,243,238,0.9)");
-  gradient.addColorStop(0.4, "rgba(200,180,255,0.5)");
+  gradient.addColorStop(0, "rgba(90,52,210,0.9)");
+  gradient.addColorStop(0.4, "rgba(138,92,255,0.45)");
   gradient.addColorStop(1, "rgba(138,92,255,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
@@ -116,8 +116,8 @@ export default function ContactParticles({ count }: ContactParticlesProps) {
         transparent
         depthWrite={false}
         toneMapped={false}
-        opacity={0.55}
-        blending={THREE.AdditiveBlending}
+        // Normal blending: additive dots vanish against the paper backdrop.
+        opacity={0.5}
       />
     </points>
   );
