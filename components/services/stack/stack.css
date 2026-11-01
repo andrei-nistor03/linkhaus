@@ -282,6 +282,8 @@
   transform: none;
 }
 .sd-scene[data-active="false"] *,
+.sd-scene[data-active="false"] *::before,
+.sd-scene[data-active="false"] *::after,
 .svc-stage[data-playing="false"] *,
 .svc-stage[data-playing="false"] *::before,
 .svc-stage[data-playing="false"] *::after {

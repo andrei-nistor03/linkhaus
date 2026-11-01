@@ -19,9 +19,8 @@ export default function ContactScene() {
   const inView = useInView(canvasRef);
 
   useEffect(() => {
-    contactState.isTouch = isTouch;
     contactState.reducedMotion = reducedMotion;
-  }, [isTouch, reducedMotion]);
+  }, [reducedMotion]);
 
   const particleCount = isTouch ? TOUCH_PARTICLES : DESKTOP_PARTICLES;
 

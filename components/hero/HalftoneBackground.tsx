@@ -62,7 +62,7 @@ export default function HalftoneBackground() {
     let cols = 0;
     let rows = 0;
 
-    let trail: TrailPoint[] = [];
+    const trail: TrailPoint[] = [];
     let lastSampleAt = 0;
     let raf = 0;
 
@@ -100,13 +100,35 @@ export default function HalftoneBackground() {
 
     function draw(now: number) {
       const t = (now - started) / 1000;
-      if (trail.length) trail = trail.filter((p) => now - p.t < TRAIL_DURATION);
+      // Points are added in time order, so the expired ones are at the front.
+      let expired = 0;
+      while (expired < trail.length && now - trail[expired].t >= TRAIL_DURATION) expired++;
+      if (expired) trail.splice(0, expired);
+
+      // Dots outside the trail's bounding box (grown by the hover radius)
+      // can't be boosted, so they skip the per-point loop.
+      let trailMinX = Infinity;
+      let trailMaxX = -Infinity;
+      let trailMinY = Infinity;
+      let trailMaxY = -Infinity;
+      for (let i = 0; i < trail.length; i++) {
+        const p = trail[i];
+        if (p.x < trailMinX) trailMinX = p.x;
+        if (p.x > trailMaxX) trailMaxX = p.x;
+        if (p.y < trailMinY) trailMinY = p.y;
+        if (p.y > trailMaxY) trailMaxY = p.y;
+      }
+      trailMinX -= HOVER_RADIUS;
+      trailMaxX += HOVER_RADIUS;
+      trailMinY -= HOVER_RADIUS;
+      trailMaxY += HOVER_RADIUS;
 
       ctx!.clearRect(0, 0, width, height);
       ctx!.fillStyle = `rgb(${DOT_COLOR})`;
 
       for (let iy = 0; iy < rows; iy++) {
         const y = iy * spacing;
+        const rowNearTrail = y > trailMinY && y < trailMaxY;
         for (let ix = 0; ix < cols; ix++) {
           const x = ix * spacing;
 
@@ -123,7 +145,8 @@ export default function HalftoneBackground() {
           const localCeiling = maxRadius * (0.65 + terrain * 0.75);
 
           let boost = 0;
-          for (let i = 0; i < trail.length; i++) {
+          const nearTrail = rowNearTrail && x > trailMinX && x < trailMaxX;
+          for (let i = 0; nearTrail && i < trail.length; i++) {
             const p = trail[i];
             const dx = x - p.x;
             const dy = y - p.y;

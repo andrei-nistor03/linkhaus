@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { PROJECT_META } from "@/components/projects/projectsData";
 
 export const PANEL_COUNT = PROJECT_META.length;
@@ -58,11 +57,14 @@ export const SCENE_PAPER = "#f5f3ee";
 export const SCENE_INK = "#0d0d0d";
 export const ENTRY_FADE_FRACTION = 0.08;
 
+// Plain {x, y, z} rather than a THREE.Vector3: this file is also used by
+// Projects.tsx, and importing three here pulled the whole library into the
+// page's initial bundle instead of the lazily loaded scene chunks.
 export interface PanelLayout {
   // The panel's own coordinate along the track axis. Compared against
   // galleryState.focus to get the panel's distance from frame center.
   trackCoord: number;
-  position: THREE.Vector3;
+  position: { x: number; y: number; z: number };
   rotationY: number;
 }
 
@@ -71,9 +73,7 @@ export function panelLayout(i: number, m: GalleryMetrics): PanelLayout {
   const trackCoord = m.vertical ? -i * m.spacing : i * m.spacing;
   return {
     trackCoord,
-    position: m.vertical
-      ? new THREE.Vector3(0, trackCoord, 0)
-      : new THREE.Vector3(trackCoord, 0, 0),
+    position: m.vertical ? { x: 0, y: trackCoord, z: 0 } : { x: trackCoord, y: 0, z: 0 },
     rotationY: -side * 0.16,
   };
 }

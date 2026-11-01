@@ -20,7 +20,6 @@ export const en = {
   },
   cursor: {
     project: ["View", "Project"],
-    explore: ["Drag", "Explore"],
   },
   projects: {
     label: "Selected Work",

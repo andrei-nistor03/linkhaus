@@ -1,5 +1,7 @@
 "use client";
 
+// First import: hooks the loading manager up before any loader starts.
+import "./trackLoading";
 import { Suspense, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, Lightformer, PerspectiveCamera } from "@react-three/drei";

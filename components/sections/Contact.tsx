@@ -6,6 +6,7 @@ import { gsap, ScrollTrigger, SplitText, registerGsap } from "@/lib/gsap";
 import { contactState } from "@/lib/contactState";
 import { isTouchDevice, useReducedMotion } from "@/lib/useMediaQuery";
 import { usePauseOffscreen } from "@/lib/usePauseOffscreen";
+import { useDeferredMount } from "@/lib/useDeferredMount";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import TransitionVeil from "@/components/contact/TransitionVeil";
 import MagneticButton from "@/components/ui/MagneticButton";
@@ -13,7 +14,8 @@ import WaveLabel from "@/components/ui/WaveLabel";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { toDisplayGlyphs } from "@/lib/i18n/displayGlyphs";
 
-const ContactScene = dynamic(() => import("@/components/three/ContactScene"), {
+const loadContactScene = () => import("@/components/three/ContactScene");
+const ContactScene = dynamic(loadContactScene, {
   ssr: false,
   loading: () => null,
 });
@@ -26,6 +28,7 @@ const CONTENT_FADE_FROM = 0.82;
 
 export default function Contact() {
   const sectionRef = useRef<HTMLElement>(null);
+  const sceneWrapRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const eyebrowRef = useRef<HTMLParagraphElement>(null);
   const titleLineRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -35,7 +38,7 @@ export default function Contact() {
   const reducedMotion = useReducedMotion();
   const { dict } = useI18n();
   usePauseOffscreen(sectionRef);
-
+  const sceneMounted = useDeferredMount(sceneWrapRef, { preload: loadContactScene });
 
   useEffect(() => {
     registerGsap();
@@ -180,20 +183,22 @@ export default function Contact() {
     <section id="contact" ref={sectionRef} className="relative bg-paper">
       <TransitionVeil sectionRef={sectionRef} reducedMotion={reducedMotion} />
 
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <SceneErrorBoundary
-          fallback={
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(ellipse 70% 55% at 50% 38%, #e6dcff, #f5f3ee 68%)",
-              }}
-            />
-          }
-        >
-          <ContactScene />
-        </SceneErrorBoundary>
+      <div ref={sceneWrapRef} className="sticky top-0 h-screen w-full overflow-hidden">
+        {sceneMounted && (
+          <SceneErrorBoundary
+            fallback={
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(ellipse 70% 55% at 50% 38%, #e6dcff, #f5f3ee 68%)",
+                }}
+              />
+            }
+          >
+            <ContactScene />
+          </SceneErrorBoundary>
+        )}
 
         <div
           ref={contentRef}

@@ -50,10 +50,13 @@ export default function TransitionVeil({
       });
 
       const blur = { px: 0 };
+      // At 0px the filter is dropped entirely: even `blur(0px)` keeps a
+      // full-screen backdrop pass running over the live canvases below.
       const applyBlur = () => {
         if (!blurs) return;
-        root.style.backdropFilter = `blur(${blur.px}px)`;
-        root.style.setProperty("-webkit-backdrop-filter", `blur(${blur.px}px)`);
+        const value = blur.px > 0.01 ? `blur(${blur.px}px)` : "";
+        root.style.backdropFilter = value;
+        root.style.setProperty("-webkit-backdrop-filter", value);
       };
 
       const tl = gsap.timeline({

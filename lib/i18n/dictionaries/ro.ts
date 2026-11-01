@@ -18,7 +18,6 @@ export const ro: Dictionary = {
   },
   cursor: {
     project: ["Vezi", "Proiectul"],
-    explore: ["Trage", "Explorează"],
   },
   projects: {
     label: "Proiecte selectate",

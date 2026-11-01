@@ -6,6 +6,7 @@ import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { galleryState } from "@/lib/galleryState";
 import { useMediaQuery, useReducedMotion } from "@/lib/useMediaQuery";
 import { usePauseOffscreen } from "@/lib/usePauseOffscreen";
+import { useDeferredMount } from "@/lib/useDeferredMount";
 import SceneErrorBoundary from "@/components/three/SceneErrorBoundary";
 import WaveLabel from "@/components/ui/WaveLabel";
 import { PROJECT_META, localizeProjects } from "@/components/projects/projectsData";
@@ -18,7 +19,8 @@ import {
   galleryMetrics,
 } from "@/lib/galleryLayout";
 
-const GalleryScene = dynamic(() => import("@/components/three/GalleryScene"), {
+const loadGalleryScene = () => import("@/components/three/GalleryScene");
+const GalleryScene = dynamic(loadGalleryScene, {
   ssr: false,
   loading: () => null,
 });
@@ -65,6 +67,7 @@ export default function Projects() {
   usePauseOffscreen(wrapperRef);
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const scrollDistance = isMobile ? MOBILE_SCROLL_DISTANCE : SCROLL_DISTANCE;
+  const sceneMounted = useDeferredMount(pinRef, { preload: loadGalleryScene });
 
   const centerOffset = useRef({ x: 0, y: 0 });
   const settleOffset = useRef({ x: 0, y: 0 });
@@ -158,6 +161,15 @@ export default function Projects() {
     const onTick = () => {
       if (!inView) return;
       const p = galleryState.progress;
+
+      // Read the nav's position before any of the style writes below, so it
+      // doesn't force a fresh layout every frame.
+      if (isMobile && navElRef.current) {
+        const navBottom = navElRef.current.getBoundingClientRect().bottom;
+        const targetCenterY = navBottom + MOBILE_LABEL_TOP_GAP + labelMetrics.current.height / 2;
+        settleOffset.current.y = targetCenterY - labelMetrics.current.centerYInPin;
+      }
+
       if (railFillRef.current) {
         railFillRef.current.style.transform = `scaleX(${p})`;
       }
@@ -171,12 +183,6 @@ export default function Projects() {
       // fades in once the gallery starts moving to keep the label readable.
       const fade = gsap.utils.clamp(0, 1, p / ENTRY_FADE_FRACTION);
       if (topScrimRef.current) topScrimRef.current.style.opacity = String(fade);
-
-      if (isMobile && navElRef.current) {
-        const navBottom = navElRef.current.getBoundingClientRect().bottom;
-        const targetCenterY = navBottom + MOBILE_LABEL_TOP_GAP + labelMetrics.current.height / 2;
-        settleOffset.current.y = targetCenterY - labelMetrics.current.centerYInPin;
-      }
 
       if (labelRef.current) {
         const settleRaw = gsap.utils.clamp(0, 1, p / TITLE_SETTLE_FRACTION);
@@ -217,9 +223,11 @@ export default function Projects() {
       }
     >
       <div ref={pinRef} className="sticky top-0 h-screen w-full overflow-hidden bg-paper">
-        <SceneErrorBoundary fallback={<div className="absolute inset-0 bg-paper" />}>
-          <GalleryScene />
-        </SceneErrorBoundary>
+        {sceneMounted && (
+          <SceneErrorBoundary fallback={<div className="absolute inset-0 bg-paper" />}>
+            <GalleryScene />
+          </SceneErrorBoundary>
+        )}
 
         {isMobile && (
           <div

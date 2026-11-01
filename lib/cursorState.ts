@@ -1,6 +1,6 @@
 "use client";
 
-export type CursorOverride = "default" | "link" | "project" | "3d" | null;
+export type CursorOverride = "default" | "link" | "project" | null;
 
 type Listener = (v: CursorOverride) => void;
 

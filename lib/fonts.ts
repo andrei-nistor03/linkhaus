@@ -18,7 +18,7 @@ export const mono = JetBrains_Mono({
 });
 
 export const thunder = localFont({
-  src: "./fonts/thunder-vf.ttf",
+  src: "./fonts/thunder-vf.woff2",
   variable: "--font-thunder",
   display: "swap",
   weight: "100 900",

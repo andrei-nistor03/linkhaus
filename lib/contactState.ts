@@ -6,7 +6,6 @@ export const contactState = {
   pointerEased: { x: 0, y: 0 },
   hoverBoost: 0,
   hoverBoostTarget: 0,
-  isTouch: false,
   reducedMotion: false,
 };
 

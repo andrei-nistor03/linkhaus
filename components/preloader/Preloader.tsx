@@ -30,8 +30,6 @@ export default function Preloader() {
     if (!isReady || exiting) return;
     setExiting(true);
 
-    const grain = document.querySelector<HTMLElement>(".grain");
-
     const tl = gsap.timeline({
       delay: reducedMotion ? 0 : 0.4,
       onComplete: () => {
@@ -44,9 +42,6 @@ export default function Preloader() {
     if (reducedMotion) {
       tl.to(rootRef.current, { opacity: 0, duration: 0.35, ease: "power2.out" });
     } else {
-      if (grain) {
-        tl.to(grain, { opacity: 0.16, duration: 0.12, yoyo: true, repeat: 1 }, 0);
-      }
       tl.to(rootRef.current, { yPercent: -100, duration: 0.85, ease: "expo.inOut" }, 0.2);
     }
 

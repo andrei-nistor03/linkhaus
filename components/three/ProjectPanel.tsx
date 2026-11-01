@@ -42,7 +42,6 @@ export default function ProjectPanel({ project, hoverHint, index, reducedMotion,
 
   const outerRef = useRef<THREE.Group>(null);
   const innerRef = useRef<THREE.Group>(null);
-  const meshRef = useRef<THREE.Mesh>(null);
   const captionBottomRef = useRef<HTMLDivElement>(null);
 
   const hover = useRef(0);
@@ -140,7 +139,6 @@ export default function ProjectPanel({ project, hoverHint, index, reducedMotion,
     <group ref={outerRef} position={[layout.position.x, layout.position.y, layout.position.z]}>
       <group ref={innerRef}>
         <RoundedBox
-          ref={meshRef}
           args={[PANEL_WIDTH, PANEL_HEIGHT, PANEL_DEPTH]}
           radius={0.045}
           smoothness={4}

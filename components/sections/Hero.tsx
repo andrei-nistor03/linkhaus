@@ -49,11 +49,6 @@ export default function Hero() {
           scrub: 1,
           onUpdate: (self) => {
             scrollState.heroProgress = self.progress;
-            scrollState.velocity = gsap.utils.clamp(
-              -1,
-              1,
-              self.getVelocity() / 2000,
-            );
           },
         },
       });

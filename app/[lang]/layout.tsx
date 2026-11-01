@@ -79,7 +79,6 @@ export default async function RootLayout({ children, params }: LayoutProps) {
         <I18nProvider locale={locale} dict={dict}>
           {children}
         </I18nProvider>
-        <div className="grain" aria-hidden="true" />
       </body>
     </html>
   );

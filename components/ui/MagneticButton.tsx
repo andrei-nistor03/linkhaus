@@ -12,7 +12,7 @@ interface MagneticButtonProps {
   strength?: number;
   radius?: number;
   layered?: boolean;
-  cursor?: "link" | "project" | "3d";
+  cursor?: "link" | "project";
   target?: string;
   rel?: string;
   onClick?: (e: ReactMouseEvent<HTMLAnchorElement>) => void;
@@ -78,10 +78,28 @@ export default function MagneticButton({
       setInnerY?.(0);
     };
 
-    document.addEventListener("mousemove", onMove);
+    // Only track the pointer while the button is within its pull radius of
+    // the viewport; otherwise every instance measured itself on every move.
+    let listening = false;
+    const listen = (on: boolean) => {
+      if (on === listening) return;
+      listening = on;
+      if (on) {
+        document.addEventListener("mousemove", onMove);
+      } else {
+        document.removeEventListener("mousemove", onMove);
+        onLeaveWindow();
+      }
+    };
+    const observer = new IntersectionObserver(([entry]) => listen(entry.isIntersecting), {
+      rootMargin: `${radius}px`,
+    });
+    observer.observe(shell);
+
     document.addEventListener("mouseleave", onLeaveWindow);
     return () => {
-      document.removeEventListener("mousemove", onMove);
+      observer.disconnect();
+      listen(false);
       document.removeEventListener("mouseleave", onLeaveWindow);
     };
   }, [isTouch, strength, radius, layered]);

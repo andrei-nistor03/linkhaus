@@ -6,13 +6,12 @@ import { useIsTouch } from "@/lib/useMediaQuery";
 import { subscribeCursorOverride } from "@/lib/cursorState";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 
-type Variant = "default" | "link" | "project" | "3d";
+type Variant = "default" | "link" | "project";
 
 const RING_SIZE: Record<Variant, number> = {
   default: 42,
   link: 68,
   project: 128,
-  "3d": 140,
 };
 
 export default function CustomCursor() {
@@ -103,7 +102,7 @@ export default function CustomCursor() {
         style={{
           width: size,
           height: size,
-          backgroundColor: variant === "project" || variant === "3d" ? "#ffffff" : "transparent",
+          backgroundColor: variant === "project" ? "#ffffff" : "transparent",
         }}
       >
         {variant === "project" && (
@@ -111,13 +110,6 @@ export default function CustomCursor() {
             {dict.cursor.project[0]}
             <br />
             {dict.cursor.project[1]}
-          </span>
-        )}
-        {variant === "3d" && (
-          <span className="font-mono-label text-[10px] leading-tight text-black">
-            {dict.cursor.explore[0]}
-            <br />
-            {dict.cursor.explore[1]}
           </span>
         )}
       </div>
