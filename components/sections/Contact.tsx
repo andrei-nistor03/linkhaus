@@ -183,7 +183,13 @@ export default function Contact() {
     <section id="contact" ref={sectionRef} className="relative bg-paper">
       <TransitionVeil sectionRef={sectionRef} reducedMotion={reducedMotion} />
 
-      <div ref={sceneWrapRef} className="sticky top-0 h-[calc(var(--vh)*100)] w-full overflow-hidden">
+      {/* Sized to lvh so it still covers the screen once a mobile toolbar
+          collapses; the negative margin keeps its in-flow height at vh, so
+          the section's scroll length (and every trigger after it) stays put. */}
+      <div
+        ref={sceneWrapRef}
+        className="sticky top-0 mb-[calc((var(--vh)-var(--lvh))*100)] h-[calc(var(--lvh)*100)] w-full overflow-hidden"
+      >
         {sceneMounted && (
           <SceneErrorBoundary
             fallback={

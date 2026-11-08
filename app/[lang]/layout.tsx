@@ -30,16 +30,20 @@ function resolveLocale(lang: string): Locale {
 // scrolling (their toolbars collapse), so vh/svh/lvh all change mid-scroll:
 // sections grow and shrink under ScrollTrigger, which ignores those mobile
 // resizes on purpose, and the Services→Contact veil fires at the wrong spot.
-// There, pin the units (see globals.css) to the height measured at load and
-// only re-measure when the width changes (rotation).
+// There, pin --vh/--svh (see globals.css) to the height measured at load and
+// only re-measure when the width changes (rotation). --lvh tracks the tallest
+// height seen, so full-screen sticky panels still cover the area the
+// toolbar uncovers when it collapses, like lvh does in a real browser.
 const STABLE_VIEWPORT_SCRIPT = `(function(){try{
 var ua=navigator.userAgent||"";
 if(!/Instagram|FBAN|FBAV|FB_IAB|FBIOS|Snapchat|musical_ly|BytedanceWebview|TikTok|Line\\/|LinkedInApp|Pinterest|Twitter/i.test(ua))return;
-var d=document.documentElement,w=0;
+var d=document.documentElement,w=0,m=0;
+function px(h){return h/100+"px";}
 function set(){var h=window.innerHeight||d.clientHeight;if(!h)return;
-var u=h/100+"px";d.style.setProperty("--vh",u);d.style.setProperty("--svh",u);d.style.setProperty("--lvh",u);w=window.innerWidth;}
+d.style.setProperty("--vh",px(h));d.style.setProperty("--svh",px(h));d.style.setProperty("--lvh",px(h));w=window.innerWidth;m=h;}
 d.setAttribute("data-inapp","");set();
-window.addEventListener("resize",function(){if(!w||window.innerWidth!==w)set();});
+window.addEventListener("resize",function(){if(!w||window.innerWidth!==w){set();return;}
+var h=window.innerHeight;if(h>m){m=h;d.style.setProperty("--lvh",px(h));}});
 }catch(e){}})();`;
 
 export function generateStaticParams() {
