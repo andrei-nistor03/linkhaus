@@ -26,6 +26,22 @@ function resolveLocale(lang: string): Locale {
   return isLocale(lang) ? lang : DEFAULT_LOCALE;
 }
 
+// Runs before first paint. In-app browsers resize the webview itself while
+// scrolling (their toolbars collapse), so vh/svh/lvh all change mid-scroll:
+// sections grow and shrink under ScrollTrigger, which ignores those mobile
+// resizes on purpose, and the Services→Contact veil fires at the wrong spot.
+// There, pin the units (see globals.css) to the height measured at load and
+// only re-measure when the width changes (rotation).
+const STABLE_VIEWPORT_SCRIPT = `(function(){try{
+var ua=navigator.userAgent||"";
+if(!/Instagram|FBAN|FBAV|FB_IAB|FBIOS|Snapchat|musical_ly|BytedanceWebview|TikTok|Line\\/|LinkedInApp|Pinterest|Twitter/i.test(ua))return;
+var d=document.documentElement,w=0;
+function set(){var h=window.innerHeight||d.clientHeight;if(!h)return;
+var u=h/100+"px";d.style.setProperty("--vh",u);d.style.setProperty("--svh",u);d.style.setProperty("--lvh",u);w=window.innerWidth;}
+d.setAttribute("data-inapp","");set();
+window.addEventListener("resize",function(){if(!w||window.innerWidth!==w)set();});
+}catch(e){}})();`;
+
 export function generateStaticParams() {
   return LOCALES.map((lang) => ({ lang }));
 }
@@ -74,7 +90,14 @@ export default async function RootLayout({ children, params }: LayoutProps) {
   const dict = getDictionary(locale);
 
   return (
-    <html lang={locale} className={`${grotesk.variable} ${mono.variable} ${thunder.variable}`}>
+    <html
+      lang={locale}
+      className={`${grotesk.variable} ${mono.variable} ${thunder.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: STABLE_VIEWPORT_SCRIPT }} />
+      </head>
       <body>
         <I18nProvider locale={locale} dict={dict}>
           {children}

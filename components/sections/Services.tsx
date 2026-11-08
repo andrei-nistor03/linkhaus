@@ -306,7 +306,7 @@ export default function Services() {
     <section
       id="services"
       ref={sectionRef}
-      className="relative overflow-clip bg-paper pb-[36vh] pt-[8vh] sm:pb-[42vh] sm:pt-[32vh]"
+      className="relative overflow-clip bg-paper pb-[calc(var(--vh)*36)] pt-[calc(var(--vh)*8)] sm:pb-[calc(var(--vh)*42)] sm:pt-[calc(var(--vh)*32)]"
     >
       <ServicesBackdrop activeIndex={activeIndex} accents={ACCENTS} />
 

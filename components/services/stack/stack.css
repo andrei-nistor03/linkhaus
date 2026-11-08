@@ -17,13 +17,13 @@
   --stack-top: 76px;
   --stack-step: 10px;
   --stack-gap: 14px;
-  --dwell: 40vh;
-  --card-h: calc(100vh - var(--stack-top) - var(--last) * var(--stack-step) - var(--stack-gap));
+  --dwell: calc(var(--vh) * 40);
+  --card-h: calc(var(--vh) * 100 - var(--stack-top) - var(--last) * var(--stack-step) - var(--stack-gap));
 }
 @supports (height: 1svh) {
   .svc-stack {
-    --dwell: 40svh;
-    --card-h: calc(100svh - var(--stack-top) - var(--last) * var(--stack-step) - var(--stack-gap));
+    --dwell: calc(var(--svh) * 40);
+    --card-h: calc(var(--svh) * 100 - var(--stack-top) - var(--last) * var(--stack-step) - var(--stack-gap));
   }
 }
 @media (min-width: 1024px) {
@@ -34,9 +34,9 @@
   }
   @supports (height: 1svh) {
     .svc-stack {
-      --dwell: 44svh;
+      --dwell: calc(var(--svh) * 44);
       --card-h: min(
-        calc(100svh - var(--stack-top) - var(--last) * var(--stack-step) - var(--stack-gap)),
+        calc(var(--svh) * 100 - var(--stack-top) - var(--last) * var(--stack-step) - var(--stack-gap)),
         880px
       );
     }

@@ -105,7 +105,7 @@ export default function Hero() {
   }, [reducedMotion]);
 
   return (
-    <section id="top" ref={wrapperRef} className="relative h-[240vh]">
+    <section id="top" ref={wrapperRef} className="relative h-[calc(var(--vh)*240)]">
       {/* The page's only h1: no visible title, but kept for screen readers
           and SEO. */}
       <h1 className="sr-only">Welcome to the house of online presence</h1>
@@ -115,7 +115,7 @@ export default function Hero() {
         // lvh: the height of the screen once the mobile browser's toolbar
         // hides on scroll. Only the background layers fill it, so no blank
         // strip shows up under the toolbar when it slides away.
-        className="sticky top-0 h-lvh w-full overflow-hidden bg-paper"
+        className="sticky top-0 h-[calc(var(--lvh)*100)] w-full overflow-hidden bg-paper"
       >
         <div ref={bgDissolveRef} className="absolute inset-0">
           <HalftoneBackground />
@@ -124,7 +124,7 @@ export default function Hero() {
         {/* svh, not vh/lvh: the always-visible height (toolbar shown), so the
             scene and scroll cue fit on screen from the start and stay put
             when the toolbar hides. */}
-        <div className="absolute inset-x-0 top-0 h-svh">
+        <div className="absolute inset-x-0 top-0 h-[calc(var(--svh)*100)]">
           <div className="absolute -inset-x-[16%] -top-[1%] -bottom-[26%] md:inset-0">
             <SceneErrorBoundary fallback={<div className="absolute inset-0" />}>
               <HeroScene />

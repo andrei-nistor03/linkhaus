@@ -6,6 +6,20 @@
   --font-grotesk: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   color-scheme: light;
+  /* Viewport-height units for section layout. In-app browsers (Instagram,
+     Snapchat, ...) resize the webview itself as their toolbars collapse, so
+     every vh/svh/lvh changes mid-scroll there; the inline script in
+     layout.tsx pins all three to a fixed pixel value in those apps. */
+  --vh: 1vh;
+  --svh: 1vh;
+  --lvh: 1vh;
+}
+
+@supports (height: 1svh) {
+  :root {
+    --svh: 1svh;
+    --lvh: 1lvh;
+  }
 }
 
 * {

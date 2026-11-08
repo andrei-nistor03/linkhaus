@@ -183,7 +183,7 @@ export default function Contact() {
     <section id="contact" ref={sectionRef} className="relative bg-paper">
       <TransitionVeil sectionRef={sectionRef} reducedMotion={reducedMotion} />
 
-      <div ref={sceneWrapRef} className="sticky top-0 h-screen w-full overflow-hidden">
+      <div ref={sceneWrapRef} className="sticky top-0 h-[calc(var(--vh)*100)] w-full overflow-hidden">
         {sceneMounted && (
           <SceneErrorBoundary
             fallback={
@@ -312,9 +312,9 @@ export default function Contact() {
         </div>
       </div>
 
-      <div className="h-[55vh] sm:h-[70vh]" aria-hidden="true" />
+      <div className="h-[calc(var(--vh)*55)] sm:h-[calc(var(--vh)*70)]" aria-hidden="true" />
 
-      <div className="relative z-20 flex flex-col items-center px-5 pb-[14vh] text-center sm:px-8 sm:pb-[18vh]">
+      <div className="relative z-20 flex flex-col items-center px-5 pb-[calc(var(--vh)*14)] text-center sm:px-8 sm:pb-[calc(var(--vh)*18)]">
         <div ref={taglineRef} className="flex items-center gap-2.5">
           <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-accent-violet" />
           <span className="font-mono-label text-xs text-ink/60 sm:text-sm">

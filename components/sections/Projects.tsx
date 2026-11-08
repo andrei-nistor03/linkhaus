@@ -217,12 +217,12 @@ export default function Projects() {
       className="relative h-[var(--h-mobile)] sm:h-[var(--h-desktop)]"
       style={
         {
-          "--h-mobile": `${MOBILE_SCROLL_DISTANCE + 100}vh`,
-          "--h-desktop": `${SCROLL_DISTANCE + 100}vh`,
+          "--h-mobile": `calc(var(--vh) * ${MOBILE_SCROLL_DISTANCE + 100})`,
+          "--h-desktop": `calc(var(--vh) * ${SCROLL_DISTANCE + 100})`,
         } as React.CSSProperties
       }
     >
-      <div ref={pinRef} className="sticky top-0 h-screen w-full overflow-hidden bg-paper">
+      <div ref={pinRef} className="sticky top-0 h-[calc(var(--vh)*100)] w-full overflow-hidden bg-paper">
         {sceneMounted && (
           <SceneErrorBoundary fallback={<div className="absolute inset-0 bg-paper" />}>
             <GalleryScene />
